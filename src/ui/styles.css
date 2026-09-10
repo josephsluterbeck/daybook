@@ -1,0 +1,1208 @@
+/* ─────────────────────────────────────────────────────────────
+   Jarvis — a personal instrument panel.
+   Palette: ember accent (matching the app's own logo) on neutral grays —
+   true black in dark mode, not a tinted near-black. good/warn/over stay
+   green/amber/red (that's a status read, not a brand color); everything
+   else avoids green entirely.
+   Type:    Archivo (headings/labels) · IBM Plex Sans (body) · IBM Plex Mono (figures)
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  --ground: #f4f6f3;
+  --surface: #ffffff;
+  --surface-2: #eef1ed;
+  --ink: #141d19;
+  --ink-2: #4d5f57;
+  --ink-3: #7d8f86;
+  --line: #dde3dd;
+  --line-strong: #c6d0c8;
+
+  --accent: #b4541f;
+  --accent-soft: #f6e7dd;
+  --accent-ink: #8c3f14;
+
+  --good: #2e7d4f;
+  --warn: #a86a12;
+  --over: #ab3a2b;
+  --good-soft: #e2f0e7;
+  --warn-soft: #f7ecd9;
+  --over-soft: #f8e5e1;
+
+  --track: #e6eae5;
+  --shadow: 0 1px 2px rgba(20, 29, 25, 0.05), 0 8px 24px -16px rgba(20, 29, 25, 0.28);
+
+  --r: 10px;
+  --tap: 44px;
+  --font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Archivo', var(--font-ui);
+  --font-num: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --ground: #000000;
+    --surface: #121212;
+    --surface-2: #1c1c1c;
+    --ink: #f2f2f2;
+    --ink-2: #a8a8a8;
+    --ink-3: #7a7a7a;
+    --line: #2a2a2a;
+    --line-strong: #3a3a3a;
+
+    --accent: #e0925a;
+    --accent-soft: #34220f;
+    --accent-ink: #f4b98a;
+
+    --good: #56b57e;
+    --warn: #d3a04a;
+    --over: #e0796a;
+    --good-soft: #16301f;
+    --warn-soft: #2f2717;
+    --over-soft: #33201c;
+
+    --track: #2a2a2a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.7);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ground: #000000;
+  --surface: #121212;
+  --surface-2: #1c1c1c;
+  --ink: #f2f2f2;
+  --ink-2: #a8a8a8;
+  --ink-3: #7a7a7a;
+  --line: #2a2a2a;
+  --line-strong: #3a3a3a;
+  --accent: #e0925a;
+  --accent-soft: #34220f;
+  --accent-ink: #f4b98a;
+  --good: #56b57e;
+  --warn: #d3a04a;
+  --over: #e0796a;
+  --good-soft: #16301f;
+  --warn-soft: #2f2717;
+  --over-soft: #33201c;
+  --track: #2a2a2a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.7);
+}
+
+/* ── Palettes (#30) ────────────────────────────────────────────────────────
+   Each swaps only --accent / --accent-soft / --accent-ink — grounds, ink and
+   the good/warn/over status colours stay shared across every palette, on
+   purpose (see "Theming rules" in ROADMAP.md's appendix: status is never
+   decoration). 'ember' is the default (matching the app's own logo) and
+   needs no block here — it already IS the bare :root accent above. Same
+   three-block shape as the base theme tokens: light default, system-dark,
+   explicit-dark. */
+:root[data-palette='cobalt'] { --accent: #2f5fc7; --accent-soft: #e3ebfa; --accent-ink: #1e4a9e; }
+@media (prefers-color-scheme: dark) {
+  :root[data-palette='cobalt']:not([data-theme='light']) { --accent: #6ea8fe; --accent-soft: #16233d; --accent-ink: #a9c8ff; }
+}
+:root[data-theme='dark'][data-palette='cobalt'] { --accent: #6ea8fe; --accent-soft: #16233d; --accent-ink: #a9c8ff; }
+
+:root[data-palette='indigo'] { --accent: #5b47c9; --accent-soft: #ebe7fa; --accent-ink: #423593; }
+@media (prefers-color-scheme: dark) {
+  :root[data-palette='indigo']:not([data-theme='light']) { --accent: #a99bff; --accent-soft: #241f3d; --accent-ink: #cabfff; }
+}
+:root[data-theme='dark'][data-palette='indigo'] { --accent: #a99bff; --accent-soft: #241f3d; --accent-ink: #cabfff; }
+
+:root[data-palette='moss'] { --accent: #6b7d2c; --accent-soft: #eef1dd; --accent-ink: #4f5e1c; }
+@media (prefers-color-scheme: dark) {
+  :root[data-palette='moss']:not([data-theme='light']) { --accent: #b0c463; --accent-soft: #262b12; --accent-ink: #cfdb96; }
+}
+:root[data-theme='dark'][data-palette='moss'] { --accent: #b0c463; --accent-soft: #262b12; --accent-ink: #cfdb96; }
+
+:root[data-palette='slate'] { --accent: #51697a; --accent-soft: #e7edf0; --accent-ink: #3a4f5e; }
+@media (prefers-color-scheme: dark) {
+  :root[data-palette='slate']:not([data-theme='light']) { --accent: #9db6c4; --accent-soft: #1c262b; --accent-ink: #c3d5dd; }
+}
+:root[data-theme='dark'][data-palette='slate'] { --accent: #9db6c4; --accent-soft: #1c262b; --accent-ink: #c3d5dd; }
+
+:root[data-palette='plum'] { --accent: #96336b; --accent-soft: #f7e5ee; --accent-ink: #742650; }
+@media (prefers-color-scheme: dark) {
+  :root[data-palette='plum']:not([data-theme='light']) { --accent: #e592bd; --accent-soft: #351522; --accent-ink: #f0b8d4; }
+}
+:root[data-theme='dark'][data-palette='plum'] { --accent: #e592bd; --accent-soft: #351522; --accent-ink: #f0b8d4; }
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+html, body {
+  /* A form field wider than its column shouldn't be able to push the whole
+     page sideways — anything that would overflow scrolls inside its own
+     container (.formgrid, .quickadd, …) instead. */
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ── Motion ────────────────────────────────────────────────── */
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrim-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sheet-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(28px); } }
+@keyframes check-pop { 0% { transform: scale(0); } 65% { transform: scale(1.2); } 100% { transform: scale(1); } }
+/* A global-search jump (#18) landing on a row — fades from the accent tint
+   back to nothing, so the eye finds the right line without a jarring blink. */
+@keyframes row-highlight { from { background: var(--accent-soft); } to { background: transparent; } }
+
+/* ── App frame ─────────────────────────────────────────────── */
+
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 18px 9px;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.topbar .sub {
+  font-family: var(--font-num);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin-left: auto;
+  text-align: right;
+  letter-spacing: 0.02em;
+}
+
+/* ── Pet ───────────────────────────────────────────────────── */
+
+.pet-strip {
+  position: relative;
+  height: 24px;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.pet-strip .pet {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  width: 34px;
+  height: 22px;
+  transform: translateX(20px);
+}
+
+.pet-fur { fill: #161616; stroke: var(--ink); stroke-width: 0.6; }
+.pet-tail { fill: #161616; stroke: var(--ink); stroke-width: 0.5; }
+.pet-shadow { fill: var(--line-strong); }
+.pet-patch { fill: #f2ede2; opacity: 0.9; }
+.pet-eye { fill: #f2ede2; }
+.pet-nose { fill: #0a0a0a; }
+.pet-collar { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
+
+.pet-body { animation: pet-bob 0.5s ease-in-out infinite; }
+.pet-leg { fill: #161616; stroke: var(--ink); stroke-width: 0.5; transform-box: fill-box; transform-origin: 50% 0%; animation: pet-walk 0.5s ease-in-out infinite; }
+.pet-leg.b1, .pet-leg.f2 { animation-delay: 0s; }
+.pet-leg.f1, .pet-leg.b2 { animation-delay: 0.25s; }
+
+@keyframes pet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+@keyframes pet-walk { 0%, 100% { transform: rotate(16deg); } 50% { transform: rotate(-16deg); } }
+
+main {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 10px 16px calc(96px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+main > * { animation: fade-in 0.18s ease; }
+
+/* Pull-to-refresh indicator (#33) — absolutely positioned so it never takes
+   part in main's own flex layout/gap; opacity and position are driven from
+   JS (usePullToRefresh) as the gesture progresses. */
+.pull-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.pull-indicator.spinning { animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: translate(-50%, 28px) rotate(360deg); } }
+
+/* ── Bottom tab bar (phone) / left rail (desktop) ──────────── */
+
+/* Invisible to layout on phone — .tabs and Drawer's panel manage their own
+   fixed positioning independently, exactly as if .rail didn't exist. Only
+   the desktop media query below turns this into a real flex column. */
+.rail { display: contents; }
+
+.tabs {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab, .drawer-item {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 9px 4px 10px;
+  min-height: var(--tap);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-top: 2px solid transparent;
+  margin-top: -1px;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.tab svg, .drawer-item svg { width: 21px; height: 21px; }
+.tab[aria-current='true'], .drawer-item[aria-current='true'] { color: var(--accent); border-top-color: var(--accent); }
+
+/* ── Hamburger + drawer (phone) ───────────────────────────────────────── */
+
+.hamburger { margin-right: 2px; }
+
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(10, 18, 15, 0.45);
+}
+
+.drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 51;
+  width: min(82vw, 320px);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: calc(16px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-left))
+           calc(16px + env(safe-area-inset-bottom)) 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+  overflow-y: auto;
+}
+.drawer[data-open='true'] { transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) { .drawer { transition: none; } }
+
+.drawer-group {
+  margin-top: 10px;
+  padding: 0 12px 6px;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.drawer-group:first-child { margin-top: 2px; }
+
+.drawer-item {
+  width: 100%;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 11px;
+  padding: 10px 12px;
+  border-top: 0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin-top: 0;
+  text-align: left;
+}
+.drawer-item[aria-current='true'] { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* Quiet mode's own toggle (#42) — top-level, above every group, set apart
+   with a rule underneath rather than a group label of its own (it isn't a
+   destination). [aria-pressed] instead of [aria-current] since this is a
+   switch, not a "you are here" — reuses the same accent treatment either way. */
+.quiet-toggle { margin-bottom: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.quiet-toggle[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent-ink); }
+
+@media (min-width: 900px) {
+  .app { flex-direction: row; }
+
+  .rail {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 176px;
+    flex: 0 0 176px;
+    border-right: 1px solid var(--line);
+  }
+
+  .tabs {
+    position: static;
+    left: auto; right: auto; bottom: auto;
+    height: auto;
+    width: auto;
+    flex: 0 0 auto;
+    grid-template-columns: 1fr;
+    grid-auto-rows: max-content;
+    align-content: start;
+    gap: 2px;
+    padding: 20px 12px 8px;
+    border-top: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+  .tab {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 11px;
+    padding: 10px 12px;
+    border-top: 0;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 0;
+  }
+  .tab[aria-current='true'] { background: var(--accent-soft); color: var(--accent-ink); }
+
+  /* The mobile overlay becomes the rest of the same sidebar: no scrim, no
+     slide transform, no independent fixed positioning — just more of the
+     column .tabs already started. Settings ends up pinned to the bottom
+     because it's the last group in DRAWER, not by name — this rule just
+     pushes whichever group renders last. */
+  .drawer-scrim { display: none; }
+  .drawer {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    width: auto;
+    flex: 1 1 auto;
+    border-right: 0;
+    padding: 8px 12px 20px;
+    transform: none !important;
+    transition: none;
+    overflow-y: visible;
+  }
+  .drawer > div:last-child { margin-top: auto; }
+
+  /* .iconbtn's own base rule also sets display, at equal specificity and
+     later in the cascade — .hamburger alone would lose to it. */
+  .iconbtn.hamburger { display: none; }
+  .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  main { padding-bottom: 48px; }
+}
+
+/* ── Panels & rows ─────────────────────────────────────────── */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.panel > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel > header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.panel > header .spacer { margin-left: auto; }
+
+.rows { display: flex; flex-direction: column; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px 11px 11px;
+  /* Always reserves the accent's 3px, transparent by default — so a row
+     with a tag colour set costs no layout shift against one that doesn't. */
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--line);
+  min-height: var(--tap);
+  animation: fade-up 0.22s ease both;
+}
+
+.row:last-child { border-bottom: 0; }
+.row.highlight { animation: row-highlight 1.5s ease; border-radius: 8px; }
+.row .grow { flex: 1; min-width: 0; }
+.row .title { font-weight: 500; }
+.row .meta { font-size: 12.5px; color: var(--ink-3); }
+.row.done .title { color: var(--ink-3); text-decoration: line-through; }
+
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.empty {
+  padding: 26px 16px;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 13.5px;
+}
+
+/* ── Hero figure ───────────────────────────────────────────── */
+
+.hero {
+  padding: 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hero .figure {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(34px, 11vw, 46px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.hero .caption { font-size: 13px; color: var(--ink-2); max-width: 30ch; }
+.hero .caption strong { color: var(--ink); font-weight: 600; }
+
+/* ── Stat strip ────────────────────────────────────────────── */
+
+/* Flex-wrap, not grid: cells stretch to fill every row, so a 5-stat strip
+   wrapping to 3 + 2 has no orphan cell and no dangling divider. */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+  margin: 0 -1px -1px 0;
+}
+
+.stat {
+  flex: 1 1 96px;
+  padding: 11px 14px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.stat .k {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.stat .v {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+/* ── Quiet mode (#42) ──────────────────────────────────────────
+   Blur, don't hide — the layout must not shift when this toggles, or the
+   switch itself is the jarring part. Only figures: envelope/task/film names
+   stay legible, or the app is unusable rather than merely discreet. Two ways
+   to peek — :focus-visible for keyboard/switch-control users, and the
+   .quiet-peek class App.tsx adds on press-and-hold (see usePointerDown
+   handling there) for everyone else. This is CSS blur, not redaction —
+   anyone with devtools reads it straight through; the drawer toggle's own
+   label says so. */
+:root[data-quiet='true'] .num,
+:root[data-quiet='true'] .figure,
+:root[data-quiet='true'] .stat .v {
+  filter: blur(7px);
+  transition: filter 0.15s;
+}
+:root[data-quiet='true'] .num:focus-visible,
+:root[data-quiet='true'] .figure:focus-visible,
+:root[data-quiet='true'] .stat .v:focus-visible,
+:root[data-quiet='true'] .quiet-peek {
+  filter: none;
+}
+
+/* The "unmissable indicator" the spec asks for — without it, a blank-looking
+   figure with quiet mode forgotten-on reads as broken, not discreet. */
+.quiet-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 14px;
+  border: 0;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.quiet-banner svg { flex: 0 0 auto; }
+
+/* ── Meters ────────────────────────────────────────────────── */
+
+.meter {
+  height: 7px;
+  background: var(--track);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 0.35s ease;
+}
+
+.meter.is-good > span { background: var(--good); }
+.meter.is-warn > span { background: var(--warn); }
+.meter.is-over > span { background: var(--over); }
+
+/* ── Chips, pills, buttons ─────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.chip.good { background: var(--good-soft); color: var(--good); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.over { background: var(--over-soft); color: var(--over); }
+.chip.accent { background: var(--accent-soft); color: var(--accent-ink); }
+
+/* A tag chip's own remove button (Journal) — inline, not a separate row action. */
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0 -2px 0 1px;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.65;
+}
+.chip-remove:hover { opacity: 1; }
+
+/* Tag colour picker (in a Sheet) — the row accent itself lives on .row */
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.swatch {
+  appearance: none;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.swatch.none { background: linear-gradient(135deg, transparent 46%, var(--line-strong) 47%, var(--line-strong) 53%, transparent 54%), var(--surface); }
+.swatch.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink-2); }
+.swatch:active { transform: scale(0.9); }
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px 13px;
+  min-height: 38px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.1s ease, filter 0.12s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.btn:hover { border-color: var(--ink-3); }
+.btn:active { transform: scale(0.96); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme='dark'] .btn.primary,
+:root:not([data-theme='light']) .btn.primary { color: #0a1730; }
+@media (prefers-color-scheme: light) { :root:not([data-theme='dark']) .btn.primary { color: #fff; } }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn.ghost:hover { background: var(--surface-2); border-color: transparent; }
+.btn.sm { min-height: 30px; padding: 4px 9px; font-size: 12px; }
+.btn.danger { color: var(--over); border-color: var(--over-soft); }
+
+.iconbtn {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.iconbtn:hover { background: var(--surface-2); color: var(--ink); }
+.iconbtn:active { transform: scale(0.88); }
+.iconbtn svg { width: 17px; height: 17px; }
+
+/* A chevron used as an expand/collapse indicator (routines, #20) rather than
+   navigation — rotates in place instead of the Icons component taking a
+   style prop it isn't built for. */
+.chevron-toggle { display: inline-flex; transition: transform 0.15s ease; }
+.chevron-toggle.open { transform: rotate(90deg); }
+
+/* Checkbox that reads as a control, not a card */
+.check {
+  appearance: none;
+  width: 21px; height: 21px;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.check:checked { background: var(--accent); border-color: var(--accent); }
+.check:checked::after {
+  content: '';
+  width: 9px; height: 5px;
+  border-left: 2px solid var(--surface);
+  border-bottom: 2px solid var(--surface);
+  transform: rotate(-45deg) translate(1px, -1px);
+  animation: check-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* The funded-goal moment (#33) — plays once ever per goal (see
+   GoalFundedMoment in Money.tsx), so it can afford to be a little more
+   than a plain fade: a quick, understated pop-and-settle. */
+.goal-funded {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--good);
+  font-size: 13px;
+  font-weight: 600;
+  animation: check-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Month nav ─────────────────────────────────────────────── */
+
+.monthnav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px 0 6px;
+}
+
+.monthnav-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 148px;
+  text-align: center;
+}
+
+.monthnav .iconbtn:disabled { opacity: 0.3; pointer-events: none; }
+.monthnav .iconbtn.flip svg { transform: rotate(180deg); }
+
+/* ── Month calendar grid (Tasks, #8) ──────────────────────────── */
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  padding: 0 11px 14px;
+}
+
+.calendar-dow {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-bottom: 4px;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.calendar-cell.empty { visibility: hidden; cursor: default; }
+.calendar-cell.today { border-color: var(--accent); }
+.calendar-cell.selected { background: var(--accent-soft); }
+.calendar-cell .calendar-daynum { font-family: var(--font-num); font-size: 12.5px; }
+.calendar-dots { display: flex; gap: 2px; min-height: 5px; }
+.calendar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.calendar-dot.task { background: var(--ink-2); }
+
+/* ── Segmented control ─────────────────────────────────────── */
+
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border-radius: 9px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.seg::-webkit-scrollbar { display: none; }
+
+.seg button {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.seg button[aria-pressed='true'] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+/* ── Forms ─────────────────────────────────────────────────── */
+
+/* min-width: 0 overrides the browser default of min-width: auto on flex/grid
+   children — without it, a native date/number input's intrinsic width can
+   refuse to shrink below its content size and push .formgrid wider than the
+   sheet, which is what was forcing the page to scroll sideways on iOS. */
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+.field > label {
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Accent-palette swatches (#30) — a fixed set of hues, not a colour picker;
+   see core/theme.ts. Named apart from the existing .swatch/.swatches (the
+   per-tag colour picker above) since the two have different sizing and
+   selected-state rules and aren't meant to look alike. Full --tap size even
+   though the visible dot reads smaller, so the tap target meets the 44px rule. */
+.palette-swatches { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.palette-swatch {
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+}
+.palette-swatch[aria-checked='true'] { border-color: var(--ink); }
+
+/* Envelope icon picker (#32) — same idea as the swatches above, sized to the
+   44px tap rule despite a small glyph, on a neutral (not accent-coloured)
+   background since the icon isn't the colour choice, the swatch above is. */
+.icon-swatches { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.icon-swatch {
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--r);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-2);
+  cursor: pointer;
+  padding: 0;
+}
+.icon-swatch.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+input[type='text'], input[type='number'], input[type='date'], input[type='time'], input[type='month'], input[type='password'], select, textarea {
+  width: 100%;
+  /* Safari's native date/time/month control is a "replaced element" (like an
+     <img>) that doesn't reliably respect width: 100% — it can render at its
+     own preferred intrinsic width regardless, breaking out of its container
+     to the right. max-width is the same fix responsive images have always
+     needed for the same reason, and actually forces the cap. Without it, the
+     overflow this produces is exactly what our own .sheet { overflow-x:
+     hidden } (a deliberate hard clip, not a bug) then cuts off from view
+     instead of letting it scroll. */
+  max-width: 100%;
+  padding: 9px 11px;
+  min-height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+}
+
+/* max-width: 100% above still wasn't enough to keep Safari's native date/
+   time control inside its box — so instead of computing a width and hoping
+   the browser honours it, these get a fixed pixel ceiling, comfortably
+   smaller than the narrowest real iPhone screen. That guarantees the edge
+   regardless of whatever these controls actually render at internally. */
+input[type='date'], input[type='month'] { max-width: 200px; }
+input[type='time'] { max-width: 160px; }
+
+textarea { resize: vertical; min-height: 76px; line-height: 1.55; }
+
+/* type="range" (the debt payoff slider) — unstyled, it renders with the
+   platform's own light-mode chrome even in dark mode. Track and thumb both
+   need every -webkit-/-moz- prefix; there's no unprefixed shorthand. */
+input[type='range'] {
+  width: 100%;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  min-height: var(--tap);
+  padding: 0;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--track);
+}
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--track);
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: var(--shadow);
+}
+input[type='range']::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* Safari's native <select> refuses to shrink below its own content width just
+   because a parent grid track or flex item is willing to — that has to be set
+   on the select itself. Chromium is more lenient here, which is exactly why
+   this class of overflow only ever showed up on an iPhone, never in testing:
+   a <select> sharing a .formgrid row with another field (Goals' "Type" next
+   to "Monthly goal", say) could push the whole sheet wider than the screen
+   on a real device while measuring perfectly fine in a desktop browser. */
+select { min-width: 0; }
+
+/* Numeric fields are type="text" + inputMode now (see Money.tsx/Queue.tsx for
+   why), so the monospace figure styling keys off inputmode instead of the
+   native type. */
+input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+.formgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 11px; }
+.formgrid .wide { grid-column: 1 / -1; }
+
+/* Quick-add bar */
+.quickadd { display: flex; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
+.quickadd:last-child { border-bottom: 0; }
+/* flex: 1 alone means flex-basis: 0% — the field would start from *zero* and
+   only get whatever's left after the select claims its full natural width,
+   which on a real phone can crowd the amount down to a sliver a few pixels
+   wide (technically still holding the typed value, just with no room to
+   render it — this, not the input type, was the "can't see what I'm typing"
+   bug). min-width guarantees it a usable floor no matter what the select does. */
+.quickadd input { flex: 1; min-width: 90px; font-family: var(--font-num); font-size: 17px; font-variant-numeric: tabular-nums; }
+.quickadd select { min-width: 0; max-width: 50%; flex: 0 1 auto; }
+
+/* Global search (#18), top of Today — an icon inset into the field rather
+   than a separate button, so it reads as one control. */
+.searchbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-3);
+  min-height: var(--tap);
+}
+.searchbox input { flex: 1; min-width: 0; border: 0; padding: 0; background: none; color: var(--ink); }
+.searchbox input:focus { outline: none; }
+
+/* ── Sheet (modal) ─────────────────────────────────────────── */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  animation: scrim-in 0.18s ease;
+}
+
+.scrim.closing { animation: scrim-out 0.18s ease both; }
+
+@media (min-width: 640px) { .scrim { align-items: center; padding: 24px; } }
+
+.sheet {
+  background: var(--surface);
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  /* A hard floor, not a hope: whatever the root cause of a given overflow
+     turns out to be (there have been a few), the sheet itself is now
+     physically incapable of scrolling sideways — an overflowing child gets
+     clipped at this edge instead of ever producing a pannable gap. */
+  overflow-x: hidden;
+  border-radius: 16px 16px 0 0;
+  border: 1px solid var(--line);
+  padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: sheet-in 0.22s cubic-bezier(0.22, 0.9, 0.32, 1);
+}
+
+.sheet.closing { animation: sheet-out 0.18s ease both; }
+
+@media (min-width: 640px) { .sheet { border-radius: 14px; } }
+
+.sheet h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sheet footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
+.sheet footer .left { margin-right: auto; }
+
+/* ── Misc ──────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  /* Same bottom clearance main{} already uses to stay clear of the fixed tab
+     bar — proven safe there, so reused here rather than re-deriving it. */
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 40;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  animation: fade-in 0.18s ease;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: var(--r);
+  font-size: 13px;
+  color: var(--accent-ink);
+}
+
+.notice .spacer { margin-left: auto; }
+
+.section-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 2px 2px 0;
+}
+
+.tags { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.note-body { white-space: pre-wrap; line-height: 1.6; }
+
+.fieldnote { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+.fieldnote.error { color: var(--over); }
+
+/* ── Lock screen ───────────────────────────────────────────── */
+
+.lockscreen {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--ground);
+}
+
+.lockcard {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.lockicon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  margin-bottom: 6px;
+}
+
+.lockcard h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.lockcard > p { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+.lockcard input { text-align: center; margin-top: 4px; }
+.lockcard .btn { width: 100%; margin-top: 2px; }
+.lockerror { color: var(--over) !important; }
+.lockhint { margin-top: 10px !important; font-size: 12px !important; color: var(--ink-3) !important; }
+
+.scroll-x { overflow-x: auto; }

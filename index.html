@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Jarvis</title>
+    <meta name="description" content="A personal command centre: money, tasks, watchlist, journal." />
+    <meta name="robots" content="noindex, nofollow" />
+    <!-- Content kept in sync with the resolved theme (and, below, the chosen
+         palette / home-screen name) by App.tsx (#30/#31) — a manual override
+         in Settings wouldn't otherwise be reflected here, since a static tag
+         or a media-query-only one can only ever track the page's first load
+         or the system preference, never a live Settings change. -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta id="status-bar-style" name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta id="app-title-meta" name="apple-mobile-web-app-title" content="Jarvis" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link id="apple-touch-icon-link" rel="apple-touch-icon" href="./icon-180.png" />
+    <link id="favicon-link" rel="icon" href="./icon-192.png" />
+    <!-- One dark/light splash pair (#31) — only ever matches devices whose
+         resolution happens to equal this one (see scripts/gen-splash.mjs);
+         everywhere else iOS just shows its usual white flash, same as today. -->
+    <link rel="apple-touch-startup-image" href="./splash-dark.png" media="(prefers-color-scheme: dark) and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="./splash-light.png" media="(prefers-color-scheme: light) and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
