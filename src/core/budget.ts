@@ -576,12 +576,16 @@ export function dueGoalContributions(data: AppData, today = todayKey()): DueGoal
   return out
 }
 
+/** A goal's standing recurring contributions (spouse autopay, employer match, …), normalised to a monthly figure the same way income is — money that lands toward the goal without counting against `g.monthly`, your own planned contribution. */
+export const recurringMonthlyTotal = (g: Goal) => g.recurring.reduce((s, r) => s + monthlyFrom(r.amount, r.cadence), 0)
+
 /** Months of contributions still needed to reach a goal. Infinity if it never gets there. */
 export function monthsToGoal(g: Goal): number {
   const saved = goalSaved(g)
   if (saved >= g.target) return 0
-  if (g.monthly <= 0) return Infinity
-  return Math.ceil((g.target - saved) / g.monthly)
+  const pace = g.monthly + recurringMonthlyTotal(g)
+  if (pace <= 0) return Infinity
+  return Math.ceil((g.target - saved) / pace)
 }
 
 /** Monthly contribution needed to close the gap by `targetDate`. 0 if already funded. */
@@ -617,7 +621,11 @@ export function goalProgress(g: Goal, today = new Date()): GoalProgress {
     return { pct, monthsLeft: null, requiredMonthly: null, pace: 'no-deadline' }
   }
   const monthsLeft = monthsUntil(g.targetDate, today)
-  const requiredMonthly = requiredMonthlyToGoal(g.target, saved, g.targetDate, today)
+  // The total pace needed to hit the deadline, minus what standing recurring
+  // contributions already cover on their own — what's left is what your own
+  // `g.monthly` actually has to make up.
+  const totalRequiredMonthly = requiredMonthlyToGoal(g.target, saved, g.targetDate, today)
+  const requiredMonthly = Math.max(0, totalRequiredMonthly - recurringMonthlyTotal(g))
   // A cent of float slop shouldn't flip a goal from on-track to behind.
   const pace: GoalPace = g.monthly >= requiredMonthly - 0.005 ? 'on-track' : 'behind'
   return { pct, monthsLeft, requiredMonthly, pace }

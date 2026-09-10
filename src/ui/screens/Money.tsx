@@ -20,6 +20,7 @@ import {
   monthlyFrom,
   nextPaydayFor,
   monthsToGoal,
+  recurringMonthlyTotal,
   requiredMonthlyToGoal,
   rolloverBalance,
   sinkingBalance,
@@ -1569,8 +1570,13 @@ function GoalSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }
   // What the deadline actually requires, recomputed as the fields change — this is what turns
   // "by February" into a number instead of a hope. Only meaningful for a total-toward-target goal.
   const targetNum = Number(target) || 0
+  // Net out standing recurring contributions (e.g. a spouse's autopay) — they
+  // count toward the deadline same as a hand-logged deposit, so what's left
+  // for your own `monthly` field is the total requirement minus those.
   const required =
-    kind === 'save' && targetDate && targetNum > savedNum ? requiredMonthlyToGoal(targetNum, savedNum, targetDate) : null
+    kind === 'save' && targetDate && targetNum > savedNum
+      ? Math.max(0, requiredMonthlyToGoal(targetNum, savedNum, targetDate) - (live ? recurringMonthlyTotal(live) : 0))
+      : null
   const monthlyNum = Number(monthly) || 0
 
   const save = () => {
@@ -1691,7 +1697,8 @@ function GoalSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }
 
       {required !== null && (
         <p className="fieldnote">
-          That's <strong>{money(required)}/mo</strong> to hit {money(targetNum)} by {prettyDate(targetDate)}.
+          That's <strong>{money(required)}/mo</strong> from you to hit {money(targetNum)} by {prettyDate(targetDate)}
+          {live && recurringMonthlyTotal(live) > 0 && ` (recurring contributions already cover ${money(recurringMonthlyTotal(live))}/mo)`}.
           {monthlyNum < required - 0.005 && (
             <>
               {' '}
