@@ -1,4 +1,4 @@
-# Jarvis
+# Daybook
 
 A personal command centre — money, tasks, watchlist, journal — that lives on
 your phone's home screen and keeps its data on your device.
