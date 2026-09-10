@@ -5,7 +5,7 @@
  *
  * Data-honesty note: Movie/Game have no "watched on"/"beaten on" date, only
  * `addedAt` — so the film/game sections below are scoped by when an item was
- * added to Jarvis, not precisely when it was finished. Everything else
+ * added to Daybook, not precisely when it was finished. Everything else
  * (expenses, bills, goal contributions, tasks, journal entries) has a real
  * date and is scoped by that exactly.
  */

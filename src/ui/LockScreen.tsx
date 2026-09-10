@@ -50,7 +50,7 @@ export default function LockScreen() {
         <span className="lockicon" aria-hidden="true">
           <Icons.lock size={22} />
         </span>
-        <h1>Jarvis is locked</h1>
+        <h1>Daybook is locked</h1>
         <p>{isPin ? `Enter your ${PIN_LENGTH}-digit PIN to open it.` : 'Enter your passphrase to open it.'}</p>
         <input
           ref={inputRef}

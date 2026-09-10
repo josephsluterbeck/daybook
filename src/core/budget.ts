@@ -3,7 +3,7 @@
  * Keeping the math here means it can be unit-tested and reused by the
  * React Native app, a CLI, or an assistant layer without change.
  */
-import type { Allocation, AppData, Bill, BillCadence, Cadence, Envelope, Expense, Goal, ID, Income } from './types'
+import type { Allocation, AppData, Bill, BillCadence, Cadence, Envelope, Expense, Goal, ID, Income, RecurringContribution } from './types'
 import { addDays, addMonthsToKey, daysInMonth, fromKey, monthKey, monthsUntil, nextDueDate, nextPayday, pad, toKey, todayKey } from './dates'
 
 /** Periods per year, used to normalise every pay cadence to a monthly figure. */
@@ -17,6 +17,9 @@ const PERIODS_PER_YEAR: Record<Cadence, number> = {
 /** Cadences with a fixed day-count period — the only ones a single anchor date can project forward. */
 const PAYDAY_PERIOD_DAYS: Partial<Record<Cadence, number>> = { weekly: 7, biweekly: 14 }
 
+/** Anything with a pay-style cadence and (optionally) an anchor date — an `Income` or a goal's `RecurringContribution` ask the identical "which occurrences have landed" question, so the scheduling functions below take just this rather than a full `Income`. */
+type Cadenced = { cadence: Cadence; anchorDate?: string }
+
 export function monthlyFrom(amount: number, cadence: Cadence): number {
   return (amount * PERIODS_PER_YEAR[cadence]) / 12
 }
@@ -25,14 +28,14 @@ export const monthlyIncome = (incomes: Income[]) =>
   incomes.reduce((s, i) => s + monthlyFrom(i.amount, i.cadence), 0)
 
 /** Next payday for an income with a known anchor date — null when the cadence has no fixed day-count period, or no anchor is set. */
-export function nextPaydayFor(income: Income, from = new Date()): string | null {
+export function nextPaydayFor(income: Cadenced, from = new Date()): string | null {
   const period = PAYDAY_PERIOD_DAYS[income.cadence]
   if (!period || !income.anchorDate) return null
   return nextPayday(income.anchorDate, period, from)
 }
 
 /** The most recent payday for an income that's already landed, on or before `from` — null under the same conditions as nextPaydayFor. */
-export function lastPayDate(income: Income, from = new Date()): string | null {
+export function lastPayDate(income: Cadenced, from = new Date()): string | null {
   const period = PAYDAY_PERIOD_DAYS[income.cadence]
   const next = nextPaydayFor(income, from)
   if (!period || !next) return null
@@ -60,7 +63,7 @@ function monthlyOccurrences(startKey: string, endKey: string, day: number): stri
  * date) — approximated as the 1st/15th and the 1st respectively, close
  * enough for "roughly when does money land," not precise to the day.
  */
-export function incomeDates(income: Income, startKey: string, endKey: string): string[] {
+export function incomeDates(income: Cadenced, startKey: string, endKey: string): string[] {
   if (income.cadence === 'weekly' || income.cadence === 'biweekly') {
     if (!income.anchorDate) return []
     const period = PAYDAY_PERIOD_DAYS[income.cadence]!
@@ -535,6 +538,42 @@ export const goalSaved = (g: Goal) => g.contributions.reduce((s, c) => s + c.amo
 /** What's been put toward a goal within a given month, from any source. */
 export function goalContributedInMonth(g: Goal, mk = monthKey()): number {
   return g.contributions.filter((c) => c.date.startsWith(mk)).reduce((s, c) => s + c.amount, 0)
+}
+
+/**
+ * The most recent occurrence of a standing recurring contribution that's
+ * already happened but hasn't been turned into a logged Contribution yet —
+ * null when nothing new is due. Reuses `incomeDates()` (built for "which
+ * paychecks landed") for every cadence, walking forward from the day after
+ * whatever was last logged, or from the rule's own anchor if nothing has
+ * been logged yet — so a goal archived or paused for months doesn't dump a
+ * backlog of individual occurrences on reopening it, just the latest one,
+ * the same "did this land yet" question the paycheck prompt asks.
+ */
+export function dueContribution(r: RecurringContribution, today = todayKey()): string | null {
+  const startKey = r.lastLogged ? addDays(r.lastLogged, 1) : r.anchorDate
+  if (startKey > today) return null
+  const occurrences = incomeDates(r, startKey, today)
+  return occurrences.length > 0 ? occurrences[occurrences.length - 1] : null
+}
+
+export interface DueGoalContribution {
+  goal: Goal
+  recurring: RecurringContribution
+  date: string
+}
+
+/** Every goal's recurring rule that has a not-yet-logged occurrence, across the whole plan — archived goals excluded, same as everywhere else recurring things are surfaced. */
+export function dueGoalContributions(data: AppData, today = todayKey()): DueGoalContribution[] {
+  const out: DueGoalContribution[] = []
+  for (const g of data.goals) {
+    if (g.archived) continue
+    for (const r of g.recurring) {
+      const date = dueContribution(r, today)
+      if (date) out.push({ goal: g, recurring: r, date })
+    }
+  }
+  return out
 }
 
 /** Months of contributions still needed to reach a goal. Infinity if it never gets there. */

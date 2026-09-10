@@ -147,7 +147,7 @@ function HomeScreenNamePanel() {
       <input
         type="text"
         value={name}
-        placeholder="Jarvis"
+        placeholder="Daybook"
         onChange={(e) => setName(e.target.value)}
         onBlur={() => store.update((d) => { d.settings.homeScreenName = name.trim() || undefined })}
       />
@@ -199,7 +199,7 @@ function LockPanel({ locked }: { locked: boolean }) {
         <>
           <p className="fieldnote">
             {locked
-              ? 'A passphrase is required to open Jarvis. Data on this device is encrypted with it — there is no reset if it’s forgotten.'
+              ? 'A passphrase is required to open Daybook. Data on this device is encrypted with it — there is no reset if it’s forgotten.'
               : 'Off. Anyone who opens this browser tab or app icon sees your data as-is.'}
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -324,12 +324,12 @@ function BackupPanel({
       return
     }
     const envelope = await store.exportEncrypted(exportPass)
-    await downloadOrCopy(envelope, `jarvis-${new Date().toISOString().slice(0, 10)}.backup.json`, copy)
+    await downloadOrCopy(envelope, `daybook-${new Date().toISOString().slice(0, 10)}.backup.json`, copy)
     setShowExportPass(false)
     setExportPass('')
   }
 
-  const exportPlain = (copy: boolean) => downloadOrCopy(store.export(), `jarvis-${new Date().toISOString().slice(0, 10)}.json`, copy)
+  const exportPlain = (copy: boolean) => downloadOrCopy(store.export(), `daybook-${new Date().toISOString().slice(0, 10)}.json`, copy)
 
   const handleFile = (file: File) => {
     const reader = new FileReader()
@@ -472,7 +472,7 @@ function CalendarExportPanel() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `jarvis-${todayKey()}.ics`
+    a.download = `daybook-${todayKey()}.ics`
     a.click()
     URL.revokeObjectURL(url)
   }

@@ -20,7 +20,7 @@
  * (like this rewrite) — not for ordinary app deploys, icon changes included,
  * anymore.
  */
-const CACHE = 'jarvis-v4'
+const CACHE = 'daybook-v4'
 const SHELL = ['./', './index.html', './manifest.webmanifest']
 
 self.addEventListener('install', (e) => {

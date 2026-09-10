@@ -151,7 +151,7 @@ export default function App() {
   // home screen" changes on iOS, not live ones, but the <link>/<meta> tags
   // still need updating now: iOS reads whatever's live in the DOM at the
   // moment of "Add to Home Screen", not the original index.html source.
-  const homeScreenName = data.settings.homeScreenName?.trim() || 'Jarvis'
+  const homeScreenName = data.settings.homeScreenName?.trim() || 'Daybook'
   useLayoutEffect(() => {
     const { icon192, icon180 } = iconPaths(palette)
     document.getElementById('favicon-link')?.setAttribute('href', icon192)

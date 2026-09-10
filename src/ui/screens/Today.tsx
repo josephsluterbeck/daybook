@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { store, uid, useData } from '../../core/store'
-import { buildPlan, formatMoney, fundingGap, goalProgress, goalSaved, lastPayDate, loggingStreak, nextPaydayFor, upcomingBills } from '../../core/budget'
+import { buildPlan, dueGoalContributions, formatMoney, fundingGap, goalProgress, goalSaved, lastPayDate, loggingStreak, nextPaydayFor, upcomingBills } from '../../core/budget'
 import { gameHours } from '../../core/games'
 import { daysSinceTouched, staleProjects } from '../../core/projects'
 import { overdueContact, upcomingBirthdays } from '../../core/people'
@@ -217,6 +217,21 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
     return null
   }, [data])
 
+  // A standing deposit (a spouse's paycheck autopay, say) that's landed but
+  // hasn't been logged as a Contribution yet — see budget.dueGoalContributions.
+  const dueContributions = useMemo(() => dueGoalContributions(data), [data])
+
+  const logDueContribution = (goalId: string, recurringId: string, date: string) => {
+    store.update((d) => {
+      const g = d.goals.find((x) => x.id === goalId)
+      if (!g) return
+      const r = g.recurring.find((x) => x.id === recurringId)
+      if (!r) return
+      g.contributions.push({ id: uid(), date, amount: r.amount, source: r.source })
+      r.lastLogged = date
+    })
+  }
+
   const perDayTone = plan.perDay <= 0 ? 'over' : plan.perDay < 15 ? 'warn' : 'good'
   const perDayDisplay = useCountUp(Math.max(0, plan.perDay))
 
@@ -263,7 +278,7 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `jarvis-${todayKey()}.json`
+    a.download = `daybook-${todayKey()}.json`
     a.click()
     URL.revokeObjectURL(url)
     store.update((d) => { d.settings.lastExportAt = new Date().toISOString() })
@@ -593,6 +608,17 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
           </span>
         </div>
       )}
+
+      {dueContributions.map(({ goal, recurring, date }) => (
+        <div key={recurring.id} className="notice" style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)', borderColor: 'var(--accent)' }}>
+          <span>
+            {money(recurring.amount)}{recurring.source && ` from ${recurring.source}`} for {goal.label} landed {relativeDay(date)}. Not logged yet.
+          </span>
+          <span className="spacer" style={{ display: 'flex', gap: 8 }}>
+            <button className="btn sm" onClick={() => logDueContribution(goal.id, recurring.id, date)}>Log it</button>
+          </span>
+        </div>
+      ))}
 
       {pendingClose && (
         <div className="notice" style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)', borderColor: 'var(--accent)' }}>

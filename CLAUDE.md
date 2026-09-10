@@ -1,4 +1,4 @@
-# Jarvis — project context
+# Daybook — project context
 
 A personal command centre for one user (Joseph). Runs today as an installable
 PWA; the plan is to port it to React Native / Expo for the App Store without a
@@ -62,9 +62,13 @@ src/
 
 - **App lock is opt-in, off by default.** Settings → App lock derives an
   AES-256-GCM key from a passphrase via PBKDF2 (210k iterations) and encrypts
-  the whole `AppData` blob at rest under `jarvis.lock.v1`; the plaintext slot
-  (`jarvis.data.v1`) is cleared while it's on. No passphrase is ever stored —
+  the whole `AppData` blob at rest under `daybook.lock.v1`; the plaintext slot
+  (`daybook.data.v1`) is cleared while it's on. No passphrase is ever stored —
   losing it means the data is unrecoverable by design. See `core/lock.ts`.
+  (Both keys were `jarvis.*.v1` before the 2026-09 Jarvis → Daybook rename —
+  `storage.migrateLegacyKeys()` carries old data forward on first load under
+  the new build; `backup.ts`'s `looksEncrypted()` still recognizes the old
+  `jarvisBackup` envelope field on import.)
 - **Exports can be encrypted independently of the app lock** — `core/backup.ts`
   wraps the same primitives in a self-describing envelope (`looksEncrypted()`
   detects it on import) with its own passphrase, so a backup file is safe to

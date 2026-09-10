@@ -1,6 +1,6 @@
 {
-  "name": "Jarvis",
-  "short_name": "Jarvis",
+  "name": "Daybook",
+  "short_name": "Daybook",
   "description": "A personal command centre: money, tasks, watchlist, journal.",
   "start_url": "./",
   "scope": "./",

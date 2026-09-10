@@ -1,5 +1,5 @@
 import { chromium } from 'playwright'
-const path = 'file:///home/claude/jarvis/dist-single/index.html'
+const path = 'file:///home/claude/daybook/dist-single/index.html'
 const errs = []
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })

@@ -120,6 +120,28 @@ export interface Contribution {
   source?: string // e.g. 'Wife' — a joint contribution, tracked but kept out of your own income math
 }
 
+/**
+ * A standing deposit that happens on its own outside the app — a spouse's
+ * autopay from every paycheck, an employer match, a bank's round-up-and-save
+ * — rather than something logged by hand each time. Same cadence vocabulary
+ * as Income, and the same reasoning (`budget.ts`'s `incomeDates()` /
+ * `nextPaydayFor()` work on either), since "which deposits landed already"
+ * is the same question whether the money is coming in or going into a goal.
+ * Nothing here posts a Contribution by itself — see `budget.dueContribution`
+ * — turning a due occurrence into a real, dated `Contribution` is still a
+ * one-tap confirmation, same as every other money entry in the app.
+ */
+export interface RecurringContribution {
+  id: ID
+  amount: number
+  cadence: Cadence
+  /** A real occurrence, 'YYYY-MM-DD' — pins weekly/biweekly to an exact day (see Income.anchorDate) and, for every cadence, marks when the rule started so nothing before it is ever treated as due. */
+  anchorDate: string
+  source?: string // e.g. 'Wife' — same meaning as Contribution.source
+  /** 'YYYY-MM-DD' of the most recent occurrence already turned into a logged Contribution — undefined means none yet, so the first due occurrence is the one at/after anchorDate. */
+  lastLogged?: string
+}
+
 export interface Goal {
   id: ID
   label: string
@@ -127,6 +149,8 @@ export interface Goal {
   target: number
   /** Every deposit ever made toward this goal, from any source. Total saved = the sum of these. */
   contributions: Contribution[]
+  /** Standing deposits that happen on their own — see RecurringContribution. Logging one appends to `contributions` like any other deposit; this list only tracks the recurring *rule*. */
+  recurring: RecurringContribution[]
   monthly: number // what *you* plan to contribute from your own income — never adjusted by contributions
   targetDate?: string // 'YYYY-MM-DD'
   notes?: string
@@ -372,7 +396,7 @@ export interface Settings {
   theme?: Theme
   /** Accent-colour choice (#30) — undefined means 'ember', matching the app's logo. A token name from core/theme.ts, resolved via `paletteOf()`, never a raw hex — that's what keeps it theme-aware. */
   palette?: PaletteId
-  /** The label under the home-screen icon (#31) — undefined means 'Jarvis'. Only takes effect the next time the app is added to a home screen; changing it here doesn't touch an already-installed icon. */
+  /** The label under the home-screen icon (#31) — undefined means 'Daybook'. Only takes effect the next time the app is added to a home screen; changing it here doesn't touch an already-installed icon. */
   homeScreenName?: string
   /** The envelope last used to log an expense — pre-selects itself next time, since most logging is repetitive. */
   lastExpenseEnvelopeId?: string
@@ -453,4 +477,4 @@ export interface MonthClose {
   note?: string
 }
 
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6

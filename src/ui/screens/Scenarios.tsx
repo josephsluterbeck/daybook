@@ -211,7 +211,7 @@ function ScenarioEditor({ scenario, onExit }: { scenario: Scenario; onExit: () =
         items={live.data.goals}
         renderMeta={(g: Goal) => `${g.kind} · ${money(g.target)} target`}
         amountKey="monthly"
-        onAdd={(label, amount) => store.update((d) => addGoal(d, live.id, { id: uid(), label, kind: 'save', target: amount * 12, monthly: amount, contributions: [] }))}
+        onAdd={(label, amount) => store.update((d) => addGoal(d, live.id, { id: uid(), label, kind: 'save', target: amount * 12, monthly: amount, contributions: [], recurring: [] }))}
         onAmount={(id, amount) => store.update((d) => updateGoal(d, live.id, id, { monthly: amount }))}
         onRemove={(id) => store.update((d) => removeGoal(d, live.id, id))}
         money={money}

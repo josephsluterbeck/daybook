@@ -20,10 +20,35 @@ export interface StorageAdapter {
   clear(key: string): void
 }
 
-export const KEY = 'jarvis.data.v1'
+export const KEY = 'daybook.data.v1'
 
 /** Where a file that fails to parse/migrate gets parked instead of being discarded. */
-export const RECOVERY_KEY = 'jarvis.data.recovery'
+export const RECOVERY_KEY = 'daybook.data.recovery'
+
+// Pre-rename keys (the app was called Jarvis until 2026-09). A device that
+// last opened the old build still has its data sitting under these.
+const LEGACY_KEY = 'jarvis.data.v1'
+const LEGACY_RECOVERY_KEY = 'jarvis.data.recovery'
+
+/**
+ * One-time carry-forward from the Jarvis → Daybook rename: if nothing lives
+ * under the new keys yet but the old ones do, copy it over before anything
+ * else touches storage. `lockKey` is passed in (rather than imported) to
+ * avoid a storage.ts ↔ lock.ts import cycle. Idempotent — once a new key has
+ * been written once, every later call is a no-op.
+ */
+export function migrateLegacyKeys(adapter: StorageAdapter, lockKey: string, legacyLockKey: string): void {
+  const carry = (from: string, to: string) => {
+    if (adapter.load(to) !== null) return
+    const old = adapter.load(from)
+    if (old === null) return
+    adapter.save(to, old)
+    adapter.clear(from)
+  }
+  carry(LEGACY_KEY, KEY)
+  carry(LEGACY_RECOVERY_KEY, RECOVERY_KEY)
+  carry(legacyLockKey, lockKey)
+}
 
 export const webStorage: StorageAdapter = {
   load(key) {
@@ -92,6 +117,14 @@ const migrations: Record<number, (d: any) => any> = {
       const opening = hours > 0 ? [{ id: `${g.id}-s1`, date: todayKey(), hours }] : []
       return { ...rest, sessions: opening }
     }),
+  }),
+  // 5 → 6: goals gained standing recurring contributions (a spouse's autopay
+  // from every paycheck, say) alongside the one-off contribution ledger.
+  // Every existing goal just gets an empty list — nothing to guess, there's
+  // no prior data that implies a recurring rule.
+  5: (d) => ({
+    ...d,
+    goals: (d.goals ?? []).map((g: any) => ({ recurring: [], ...g })),
   }),
 }
 

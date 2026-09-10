@@ -648,7 +648,7 @@ Tasks and the queue are what you'll open on a Tuesday evening.
 
 ## 17. Quick-add parser
 
-**Why.** The most Jarvis-feeling thing you can build with no API key. One
+**Why.** The most Daybook-feeling thing you can build with no API key. One
 field, and it works out what you meant.
 
 ```

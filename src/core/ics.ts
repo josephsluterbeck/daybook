@@ -5,7 +5,7 @@
  *
  * One-way snapshot, not sync — stable UIDs mean re-importing a fresh export
  * updates existing calendar events instead of duplicating them, but nothing
- * here pushes a change made *after* export back into Jarvis.
+ * here pushes a change made *after* export back into Daybook.
  */
 import type { AppData, Bill, BillCadence, Person, Repeat, Task } from './types'
 import { billNextDue } from './budget'
@@ -93,7 +93,7 @@ function taskEvent(t: Task, now: Date): string[] | null {
   const freq = REPEAT_FREQ[t.repeat]
   return vevent(
     {
-      uid: `task-${t.id}@jarvis.local`,
+      uid: `task-${t.id}@daybook.local`,
       dateKey: t.due,
       time: t.time,
       summary: t.title,
@@ -113,7 +113,7 @@ function personEvent(p: Person, now: Date): string[] | null {
   const dateKey = `${birthYear ?? now.getFullYear()}-${pad2(month)}-${pad2(day)}`
   return vevent(
     {
-      uid: `person-${p.id}@jarvis.local`,
+      uid: `person-${p.id}@daybook.local`,
       dateKey,
       summary: `${p.name}’s birthday`,
       description: birthYear ? `Born ${birthYear}` : undefined,
@@ -128,7 +128,7 @@ function billEvent(b: Bill, now: Date, from: Date): string[] {
   const interval = CADENCE_INTERVAL[b.cadence]
   return vevent(
     {
-      uid: `bill-${b.id}@jarvis.local`,
+      uid: `bill-${b.id}@daybook.local`,
       dateKey: due,
       summary: `${b.label} due`,
       description: b.autopay ? 'Autopay is on for this one — informational.' : 'Not on autopay.',
@@ -147,7 +147,7 @@ export function toIcs(data: AppData, opts: IcsOptions = {}, now = new Date()): s
   const includeBills = opts.bills ?? true
   const includePeople = opts.people ?? true
 
-  const lines: string[] = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Jarvis//jarvis//EN', 'CALSCALE:GREGORIAN']
+  const lines: string[] = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Daybook//daybook//EN', 'CALSCALE:GREGORIAN']
 
   if (includeTasks) {
     for (const t of data.tasks) {

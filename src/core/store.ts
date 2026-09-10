@@ -5,7 +5,7 @@
  */
 import { useSyncExternalStore } from 'react'
 import type { AppData } from './types'
-import { deserialise, serialise, webStorage, KEY, RECOVERY_KEY, type StorageAdapter } from './storage'
+import { deserialise, serialise, webStorage, KEY, RECOVERY_KEY, migrateLegacyKeys, type StorageAdapter } from './storage'
 import { emptyData, seedData } from './seed'
 import { pruneOldCompletions } from './routines'
 import {
@@ -23,6 +23,7 @@ import {
   changePassphrase as changeLockPassphraseRecord,
   encryptRecord,
   LOCK_KEY,
+  LEGACY_LOCK_KEY,
   type LockKind,
   type UnlockedSession,
 } from './lock'
@@ -51,6 +52,9 @@ export class Store {
   private highlightListeners = new Set<Listener>()
 
   constructor(private adapter: StorageAdapter) {
+    // Pre-rename data (the app was called Jarvis until 2026-09) — carry it
+    // forward under the new keys before anything below reads storage.
+    migrateLegacyKeys(adapter, LOCK_KEY, LEGACY_LOCK_KEY)
     this.protectedMode = isLockEnabled(adapter)
     if (this.protectedMode) {
       // Data stays encrypted on disk until unlock() succeeds. This placeholder

@@ -8,7 +8,9 @@ import { deriveKey, encryptString, decryptString, newSalt, toB64, fromB64, PBKDF
 const ENVELOPE_VERSION = 1
 
 interface Envelope {
-  jarvisBackup: number // presence + shape of this field is how looksEncrypted() tells envelope from plain AppData JSON
+  daybookBackup: number // presence + shape of this field is how looksEncrypted() tells envelope from plain AppData JSON
+  /** Legacy field name from backups made before the Jarvis → Daybook rename (2026-09) — still recognized on import, never written. */
+  jarvisBackup?: number
   salt: string
   iterations: number
   iv: string
@@ -19,7 +21,7 @@ export async function encryptBackup(passphrase: string, plaintextJson: string): 
   const salt = newSalt()
   const key = await deriveKey(passphrase, salt, PBKDF2_ITERATIONS)
   const enc = await encryptString(plaintextJson, key)
-  const env: Envelope = { jarvisBackup: ENVELOPE_VERSION, salt: toB64(salt), iterations: PBKDF2_ITERATIONS, ...enc }
+  const env: Envelope = { daybookBackup: ENVELOPE_VERSION, salt: toB64(salt), iterations: PBKDF2_ITERATIONS, ...enc }
   return JSON.stringify(env, null, 2)
 }
 
@@ -27,7 +29,12 @@ export async function encryptBackup(passphrase: string, plaintextJson: string): 
 export function looksEncrypted(raw: string): boolean {
   try {
     const parsed = JSON.parse(raw)
-    return typeof parsed === 'object' && parsed !== null && typeof parsed.jarvisBackup === 'number' && typeof parsed.ciphertext === 'string'
+    return (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      (typeof parsed.daybookBackup === 'number' || typeof parsed.jarvisBackup === 'number') &&
+      typeof parsed.ciphertext === 'string'
+    )
   } catch {
     return false
   }

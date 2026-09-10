@@ -122,6 +122,12 @@ export const seedData = (): AppData => ({
         { id: id('c', 3), date: addDays(todayKey(), -14), amount: 250, source: 'Wife' },
         { id: id('c', 4), date: addDays(todayKey(), -2), amount: 200 },
       ],
+      // Her paycheck autopays into this one every other week — the -14-day
+      // contribution above was the last one logged, so the next occurrence
+      // (14 days later, i.e. today) shows up as due, demonstrating the prompt.
+      recurring: [
+        { id: id('rc', 1), amount: 250, cadence: 'biweekly', anchorDate: addDays(todayKey(), -14), lastLogged: addDays(todayKey(), -14), source: 'Wife' },
+      ],
     },
     {
       id: id('s', 2),
@@ -135,6 +141,7 @@ export const seedData = (): AppData => ({
         { id: id('c', 5), date: addDays(todayKey(), -90), amount: 3250 },
         { id: id('c', 6), date: addDays(todayKey(), -5), amount: 150 },
       ],
+      recurring: [],
     },
     {
       id: id('s', 3),
@@ -144,6 +151,7 @@ export const seedData = (): AppData => ({
       monthly: 50,
       color: '#7d5ba6',
       contributions: [{ id: id('c', 7), date: addDays(todayKey(), -20), amount: 400 }],
+      recurring: [],
     },
   ],
   tasks: [
@@ -221,7 +229,7 @@ export const seedData = (): AppData => ({
     },
     {
       id: id('pr', 3),
-      label: 'Jarvis',
+      label: 'Daybook',
       status: 'active',
       nextAction: 'Ship the movies section',
       lastTouched: todayKey(),
@@ -293,7 +301,7 @@ export const seedData = (): AppData => ({
       id: id('n', 1),
       at: new Date().toISOString(),
       text: 'App idea: the assistant layer should read the same data the screens do, so it can answer “can I afford this?” without a separate integration.',
-      tags: ['jarvis', 'idea'],
+      tags: ['daybook', 'idea'],
     },
     {
       id: id('n', 2),

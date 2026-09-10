@@ -14,7 +14,10 @@
 import { KEY, type StorageAdapter } from './storage'
 import { deriveKey, encryptString, decryptString, newSalt, toB64, fromB64, PBKDF2_ITERATIONS } from './crypto'
 
-export const LOCK_KEY = 'jarvis.lock.v1'
+export const LOCK_KEY = 'daybook.lock.v1'
+
+/** Pre-rename key (the app was called Jarvis until 2026-09) — see storage.migrateLegacyKeys(). */
+export const LEGACY_LOCK_KEY = 'jarvis.lock.v1'
 
 export type LockKind = 'pin' | 'passphrase'
 

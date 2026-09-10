@@ -7,7 +7,12 @@
  */
 import type { StorageAdapter } from './storage'
 
-const KEYS = ['jarvis.snapshot.0', 'jarvis.snapshot.1', 'jarvis.snapshot.2']
+const KEYS = ['daybook.snapshot.0', 'daybook.snapshot.1', 'daybook.snapshot.2']
+
+// Pre-rename keys (the app was called Jarvis until 2026-09) — read as a
+// fallback so a snapshot taken just before the rename is still listed once,
+// even though new snapshots only ever land under KEYS.
+const LEGACY_KEYS = ['jarvis.snapshot.0', 'jarvis.snapshot.1', 'jarvis.snapshot.2']
 
 export interface Snapshot {
   key: string
@@ -26,7 +31,7 @@ export function pushSnapshot(adapter: StorageAdapter, serialisedData: string): v
 /** Newest first. Skips any slot that doesn't parse rather than failing the whole list. */
 export function listSnapshots(adapter: StorageAdapter): Snapshot[] {
   const out: Snapshot[] = []
-  for (const key of KEYS) {
+  for (const key of [...KEYS, ...LEGACY_KEYS]) {
     const raw = adapter.load(key)
     if (!raw) continue
     try {

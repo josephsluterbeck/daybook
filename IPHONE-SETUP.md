@@ -1,4 +1,4 @@
-# Getting Jarvis onto your iPhone, securely
+# Getting Daybook onto your iPhone, securely
 
 A one-time setup. After this, your data lives only on your phone, and the
 page itself is behind a real login — not just an unlisted URL.
@@ -20,9 +20,9 @@ the site needs to live there rather than Netlify/Vercel/GitHub Pages.
    — free, no card required for this.
 2. Left sidebar → **Workers & Pages** → **Create** → **Pages** tab →
    **Upload assets**.
-3. Name the project (e.g. `jarvis`) → drag your `dist/` folder in →
+3. Name the project (e.g. `daybook`) → drag your `dist/` folder in →
    **Deploy**.
-4. You'll get a URL like `jarvis-xyz.pages.dev`. Keep it — you'll need it in
+4. You'll get a URL like `daybook-xyz.pages.dev`. Keep it — you'll need it in
    the next two steps.
 
 ## 3. Put a real login in front of it — Cloudflare Access
@@ -92,11 +92,13 @@ the page itself from being reachable by anyone who isn't you.
 
 ```bash
 npm run build
-npx wrangler pages deploy dist
+npx wrangler pages deploy dist --project-name=daybook
 ```
 
-(One-time `npx wrangler login` first.) This redeploys to the same project
-and URL — the Access policy stays attached automatically, and your data on
+(One-time `npx wrangler login` first.) The `--project-name` matters once
+there's more than one Pages project on the account — wrangler will ask
+interactively otherwise. This redeploys to the same project and URL — the
+Access policy stays attached automatically, and your data on
 the phone is untouched, since it lives in the browser's storage, not in the
 deployed code. If a change ever reshapes the data itself, `CLAUDE.md`
 documents the migration step that keeps existing data opening under the new

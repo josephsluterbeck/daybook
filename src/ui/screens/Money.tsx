@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { store, uid, useData, useHighlight } from '../../core/store'
-import type { Bill, BillCadence, Cadence, Debt, Envelope, Expense, Goal, Income } from '../../core/types'
+import type { Bill, BillCadence, Cadence, Debt, Envelope, Expense, Goal, Income, RecurringContribution } from '../../core/types'
 import { lowPoint, project } from '../../core/cashflow'
 import { order, payoffDate, totalInterest } from '../../core/debt'
 import {
@@ -8,6 +8,7 @@ import {
   billsForMonths,
   buildPlan,
   canIAfford,
+  dueContribution,
   envelopeHistory,
   expenseTotal,
   formatMoney,
@@ -402,7 +403,7 @@ function IncomeSheet({ income, onClose }: { income: Income | null; onClose: () =
   // semimonthly and monthly follow the calendar instead, so an anchor date
   // wouldn't pin anything down for those.
   const anchorable = cadence === 'weekly' || cadence === 'biweekly'
-  const preview = anchorable && anchorDate ? nextPaydayFor({ id: '', label: '', amount: 0, cadence, anchorDate }) : null
+  const preview = anchorable && anchorDate ? nextPaydayFor({ cadence, anchorDate }) : null
 
   const save = () => {
     const amt = Number(amount)
@@ -1559,6 +1560,11 @@ function GoalSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }
   const [contribDate, setContribDate] = useState(todayKey())
   const [contribSource, setContribSource] = useState('')
 
+  const [recurAmount, setRecurAmount] = useState('')
+  const [recurCadence, setRecurCadence] = useState<Cadence>('biweekly')
+  const [recurAnchor, setRecurAnchor] = useState(todayKey())
+  const [recurSource, setRecurSource] = useState('')
+
   const savedNum = live ? goalSaved(live) : 0
   // What the deadline actually requires, recomputed as the fields change — this is what turns
   // "by February" into a number instead of a hope. Only meaningful for a total-toward-target goal.
@@ -1582,7 +1588,7 @@ function GoalSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }
         const t = d.goals.find((x) => x.id === goal.id)
         if (t) Object.assign(t, patch)
       } else {
-        d.goals.push({ id: uid(), contributions: [], ...patch })
+        d.goals.push({ id: uid(), contributions: [], recurring: [], ...patch })
       }
     })
     onClose()
@@ -1604,6 +1610,37 @@ function GoalSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }
     store.update((d) => {
       const g = d.goals.find((x) => x.id === goal.id)
       if (g) g.contributions = g.contributions.filter((c) => c.id !== id)
+    })
+  }
+
+  const addRecurring = () => {
+    const amt = Number(recurAmount)
+    if (!goal || !Number.isFinite(amt) || amt <= 0 || !recurAnchor) return
+    store.update((d) => {
+      const g = d.goals.find((x) => x.id === goal.id)
+      if (g) g.recurring.push({ id: uid(), amount: amt, cadence: recurCadence, anchorDate: recurAnchor, source: recurSource.trim() || undefined })
+    })
+    setRecurAmount('')
+    setRecurSource('')
+  }
+
+  const removeRecurring = (id: string) => {
+    if (!goal) return
+    store.update((d) => {
+      const g = d.goals.find((x) => x.id === goal.id)
+      if (g) g.recurring = g.recurring.filter((r) => r.id !== id)
+    })
+  }
+
+  /** Turns one due occurrence into a real, dated Contribution and advances the rule past it — same one-tap-confirm shape as every other money entry, just pre-filled from the recurring rule instead of typed by hand. */
+  const logRecurring = (r: RecurringContribution, date: string) => {
+    if (!goal) return
+    store.update((d) => {
+      const g = d.goals.find((x) => x.id === goal.id)
+      if (!g) return
+      g.contributions.push({ id: uid(), date, amount: r.amount, source: r.source })
+      const rec = g.recurring.find((x) => x.id === r.id)
+      if (rec) rec.lastLogged = date
     })
   }
 
@@ -1722,6 +1759,101 @@ function GoalSheet({ goal, onClose }: { goal: Goal | null; onClose: () => void }
           </div>
         </Field>
       )}
+
+      {goal && (
+        <Field label="Recurring contributions">
+          <div className="rows" style={{ border: '1px solid var(--line)', borderRadius: 8 }}>
+            {live!.recurring.length === 0 && <Empty>None set up — for a deposit that lands on its own, like a spouse's paycheck autopay.</Empty>}
+            {live!.recurring.map((r) => {
+              const due = dueContribution(r)
+              return (
+                <div key={r.id} className="row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div className="grow">
+                      <div className="title">
+                        {money(r.amount)} · {CADENCE_LABEL[r.cadence]}
+                      </div>
+                      <div className="meta">
+                        {r.source && `${r.source} · `}since {prettyDate(r.anchorDate)}
+                      </div>
+                    </div>
+                    <button type="button" className="iconbtn" aria-label="Remove recurring contribution" onClick={() => removeRecurring(r.id)}>
+                      <Icons.x size={15} />
+                    </button>
+                  </div>
+                  {due && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        padding: '6px 10px',
+                        background: 'var(--accent-soft)',
+                        borderRadius: 6,
+                      }}
+                    >
+                      <span style={{ fontSize: 13, color: 'var(--accent-ink)' }}>Due {prettyDate(due)}</span>
+                      <button type="button" className="btn sm" onClick={() => logRecurring(r, due)}>
+                        Log it
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 10 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={recurAmount}
+                placeholder="0.00"
+                onChange={(e) => setRecurAmount(e.target.value)}
+                aria-label="Recurring amount"
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <select
+                value={recurCadence}
+                onChange={(e) => setRecurCadence(e.target.value as Cadence)}
+                aria-label="Recurring cadence"
+                style={{ flex: 1, minWidth: 0 }}
+              >
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="semimonthly">Twice a month</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="date"
+                value={recurAnchor}
+                onChange={(e) => setRecurAnchor(e.target.value)}
+                aria-label="First occurrence"
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <input
+                type="text"
+                value={recurSource}
+                onChange={(e) => setRecurSource(e.target.value)}
+                placeholder="Who (optional) — leave blank for you"
+                aria-label="Recurring source"
+                style={{ flex: 1, minWidth: 0 }}
+              />
+            </div>
+            <button className="btn primary" onClick={addRecurring} type="button">
+              Add recurring contribution
+            </button>
+          </div>
+          <p className="fieldnote">
+            For a deposit that happens on its own — a paycheck autopay, an employer match. A due occurrence waits for
+            "Log it" before it's added to the ledger above; nothing posts by itself.
+          </p>
+        </Field>
+      )}
+
       {goal && !goal.archived && (
         <button
           type="button"
