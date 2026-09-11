@@ -1030,6 +1030,13 @@ input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font
 .formgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 11px; }
 .formgrid .wide { grid-column: 1 / -1; }
 
+/* Bill's "someone else covers" + "who" pair (#Edit bill): the first label is
+   long enough to wrap to two lines on a narrow phone while "Who" never does,
+   which otherwise drops that input a line lower than its neighbour. Reserve
+   two lines of label height for both so the input boxes always sit level,
+   whether or not either label actually wraps. */
+.split-row .field > label { min-height: 3em; }
+
 /* Batch entry (Spending) gets more breathing room than a normal Sheet's
    formgrid — it's a screen you sit in for a while, not a quick modal. */
 .batch-formgrid { gap: 16px 11px; padding-bottom: 4px; }
@@ -1095,6 +1102,16 @@ input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font
      physically incapable of scrolling sideways — an overflowing child gets
      clipped at this edge instead of ever producing a pannable gap. */
   overflow-x: hidden;
+  /* Sitting inside .scrim's position:fixed overlay is exactly the situation
+     iOS WebKit (especially the standalone home-screen app, not just mobile
+     Safari) is known to fumble touch-scrolling for — the gesture gets
+     swallowed by the fixed ancestor instead of scrolling this element.
+     touch-action tells it up front that vertical panning here is ours to
+     handle; -webkit-overflow-scrolling turns on momentum scrolling, which
+     doubles as the flag that's historically forced WebKit to actually treat
+     the element as scrollable in this exact nested-fixed setup. */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   border-radius: 16px 16px 0 0;
   border: 1px solid var(--line);
   padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
@@ -1116,23 +1133,7 @@ input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font
   letter-spacing: -0.01em;
 }
 
-/* Sticky, not just another flex child — a Sheet can grow taller than the
-   viewport (Edit bill, with its override ledger, easily does), and Save /
-   Delete are the two controls you can never afford to have scroll out of
-   reach. Pinning the footer to the bottom of .sheet's own scrollport keeps
-   them in view no matter how much the fields above have grown; the fields
-   still scroll normally underneath. */
-.sheet footer {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  position: sticky;
-  bottom: 0;
-  margin: 2px -18px calc(-18px - env(safe-area-inset-bottom));
-  padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--line);
-}
+.sheet footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
 .sheet footer .left { margin-right: auto; }
 
 /* ── Misc ──────────────────────────────────────────────────── */

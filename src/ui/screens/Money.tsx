@@ -848,24 +848,29 @@ function BillSheet({ bill, onClose }: { bill: Bill | null; onClose: () => void }
             </select>
           </Field>
         )}
-        <Field label="Someone else covers (optional)">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={splitAmount}
-            onChange={(e) => setSplitAmount(e.target.value)}
-            placeholder="0.00"
-          />
-        </Field>
-        <Field label="Who">
-          <input
-            type="text"
-            value={splitSource}
-            onChange={(e) => setSplitSource(e.target.value)}
-            placeholder="Wife"
-            disabled={splitNum <= 0}
-          />
-        </Field>
+        {/* Grouped in their own nested row so the split amount and who-covers-it
+            stay side by side no matter how the cadence-conditional "Due month"
+            field above shifts the outer grid's column parity. */}
+        <div className="formgrid wide split-row">
+          <Field label="Someone else covers (optional)">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={splitAmount}
+              onChange={(e) => setSplitAmount(e.target.value)}
+              placeholder="0.00"
+            />
+          </Field>
+          <Field label="Who">
+            <input
+              type="text"
+              value={splitSource}
+              onChange={(e) => setSplitSource(e.target.value)}
+              placeholder="Wife"
+              disabled={splitNum <= 0}
+            />
+          </Field>
+        </div>
         <Field label="Colour" wide>
           <ColorPicker value={color} onChange={setColor} />
         </Field>
@@ -883,7 +888,6 @@ function BillSheet({ bill, onClose }: { bill: Bill | null; onClose: () => void }
 
       {bill && (
         <Field label="Different amount some months">
-          <p className="fieldnote">For a bill that varies — a utility, say — without losing the usual amount above.</p>
           <div className="rows" style={{ border: '1px solid var(--line)', borderRadius: 8 }}>
             {Object.keys(live!.amounts ?? {}).length === 0 && <Empty>No overrides set.</Empty>}
             {Object.entries(live!.amounts ?? {})
