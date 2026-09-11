@@ -797,7 +797,7 @@ main > * { animation: fade-in 0.18s ease; }
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 2px 0 6px;
+  padding: 0;
 }
 
 .monthnav-label {
@@ -1116,7 +1116,23 @@ input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font
   letter-spacing: -0.01em;
 }
 
-.sheet footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
+/* Sticky, not just another flex child — a Sheet can grow taller than the
+   viewport (Edit bill, with its override ledger, easily does), and Save /
+   Delete are the two controls you can never afford to have scroll out of
+   reach. Pinning the footer to the bottom of .sheet's own scrollport keeps
+   them in view no matter how much the fields above have grown; the fields
+   still scroll normally underneath. */
+.sheet footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  margin: 2px -18px calc(-18px - env(safe-area-inset-bottom));
+  padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
 .sheet footer .left { margin-right: auto; }
 
 /* ── Misc ──────────────────────────────────────────────────── */
