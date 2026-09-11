@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react'
-import { store, uid, useData, useLockState, useUndoToast } from './core/store'
+import { store, useData, useLockState, useUndoToast } from './core/store'
 import { applyIntent, describeIntent, parseCaptureParam, parseIntent } from './core/intents'
-import { parseQuickAdd } from './core/parse'
+import { intentFromParsed, parseQuickAdd } from './core/parse'
 import { DEFAULT_PALETTE, iconPaths } from './core/theme'
 import { TABS, type RouteKey } from './ui/nav'
 import { Icons, usePullToRefresh } from './ui/components/kit'
@@ -18,9 +18,7 @@ import People from './ui/screens/People'
 import Maintenance from './ui/screens/Maintenance'
 import Learning from './ui/screens/Learning'
 import Scenarios from './ui/screens/Scenarios'
-import Inbox from './ui/screens/Inbox'
 import Settings from './ui/Settings'
-import { MonthCloseLauncher } from './ui/MonthCloseSheet'
 import LockScreen from './ui/LockScreen'
 
 /** How long the app can sit backgrounded before it re-locks itself. */
@@ -37,12 +35,11 @@ const ICON: Record<RouteKey, (p?: { size?: number }) => ReactElement> = {
   people: Icons.people,
   maintenance: Icons.maintenance,
   learning: Icons.learning,
-  inbox: Icons.inbox,
   scenarios: Icons.scenario,
 }
 
 /** RouteKey headings the topbar title falls back to outside Today's own greeting. */
-const HEADING: Record<RouteKey, string> = { today: 'Today', money: 'Money', queue: 'Queue', tasks: 'Tasks', journal: 'Journal', projects: 'Projects', shopping: 'Shopping', people: 'People', maintenance: 'Maintenance', learning: 'Learning', inbox: 'Inbox', scenarios: 'Scenarios' }
+const HEADING: Record<RouteKey, string> = { today: 'Today', money: 'Money', queue: 'Queue', tasks: 'Tasks', journal: 'Journal', projects: 'Projects', shopping: 'Shopping', people: 'People', maintenance: 'Maintenance', learning: 'Learning', scenarios: 'Scenarios' }
 
 function greeting() {
   const h = new Date().getHours()
@@ -75,7 +72,6 @@ export default function App() {
   // left — nothing here survives a reload, deliberately.
   const [route, setRoute] = useState<RouteKey>('today')
   const [settings, setSettings] = useState(false)
-  const [monthCloseOpen, setMonthCloseOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
   const pullToRefresh = usePullToRefresh()
@@ -168,12 +164,15 @@ export default function App() {
   // logs the same expense twice.
   useEffect(() => {
     if (lockState === 'locked') return
+    // `?capture=` is unstructured raw text (a Shortcut or Siri dictation that
+    // hasn't decided what it is yet) — parsed and filed the same way Today's
+    // own quick-add commits it, not held anywhere for later triage.
     const capture = parseCaptureParam(window.location.search)
     if (capture) {
-      store.update((d) => {
-        d.inbox.push({ id: uid(), at: new Date().toISOString(), text: capture, guess: parseQuickAdd(capture, d.envelopes) })
-      })
-      store.notice('Captured — decide later in Inbox')
+      const parsed = parseQuickAdd(capture, data.envelopes)
+      const intent = intentFromParsed(parsed)
+      store.update((d) => applyIntent(d, intent))
+      store.notice(`${describeIntent(intent)} from a Shortcut`)
       window.history.replaceState({}, '', window.location.pathname)
       return
     }
@@ -202,12 +201,10 @@ export default function App() {
 
   if (lockState === 'locked') return <LockScreen />
 
-  // The drawer's own onClick handler special-cases 'settings' (and now
-  // 'monthclose') to open a Sheet instead of changing `route` — see nav.ts's
-  // DrawerKey doc comment.
-  const navigateFromDrawer = (key: 'journal' | 'inbox' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios' | 'monthclose' | 'settings') => {
+  // The drawer's own onClick handler special-cases 'settings' to open a
+  // Sheet instead of changing `route` — see nav.ts's DrawerKey doc comment.
+  const navigateFromDrawer = (key: 'journal' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios' | 'settings') => {
     if (key === 'settings') setSettings(true)
-    else if (key === 'monthclose') setMonthCloseOpen(true)
     else setRoute(key)
   }
 
@@ -243,8 +240,8 @@ export default function App() {
         <Drawer
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
-          isActive={(key) => (key === 'settings' ? settings : key === 'monthclose' ? monthCloseOpen : route === key)}
-          onNavigate={(key) => navigateFromDrawer(key as 'journal' | 'inbox' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios' | 'monthclose' | 'settings')}
+          isActive={(key) => (key === 'settings' ? settings : route === key)}
+          onNavigate={(key) => navigateFromDrawer(key as 'journal' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios' | 'settings')}
           triggerRef={hamburgerRef}
         />
       </div>
@@ -287,12 +284,10 @@ export default function App() {
           {route === 'maintenance' && <Maintenance />}
           {route === 'learning' && <Learning />}
           {route === 'scenarios' && <Scenarios />}
-          {route === 'inbox' && <Inbox />}
         </main>
       </div>
 
       {settings && <Settings onClose={() => setSettings(false)} />}
-      {monthCloseOpen && <MonthCloseLauncher onClose={() => setMonthCloseOpen(false)} />}
       <UndoToast />
     </div>
   )

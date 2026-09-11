@@ -153,13 +153,17 @@ function MaintenanceSheet({ item, onClose }: { item: MaintenanceItem | null; onC
 
   const save = () => {
     if (!label.trim()) return
+    // Mileage fields are car-only in the form above — clearing them here too
+    // means switching scope away from Car doesn't silently leave stale
+    // odometer data behind on an item that no longer shows it.
+    const isCar = scope === 'car'
     const patch = {
       label: label.trim(),
       scope,
       everyDays: Number(everyDays) || undefined,
-      everyMiles: Number(everyMiles) || undefined,
+      everyMiles: isCar ? Number(everyMiles) || undefined : undefined,
       lastDone: lastDone || undefined,
-      lastOdometer: Number(lastOdometer) || undefined,
+      lastOdometer: isCar ? Number(lastOdometer) || undefined : undefined,
       cost: Number(cost) || undefined,
       notes: notes.trim() || undefined,
     }
@@ -200,18 +204,24 @@ function MaintenanceSheet({ item, onClose }: { item: MaintenanceItem | null; onC
         <Field label="Every (days)">
           <input type="text" inputMode="numeric" value={everyDays} onChange={(e) => setEveryDays(e.target.value)} placeholder="180" />
         </Field>
-        <Field label="Every (miles)">
-          <input type="text" inputMode="numeric" value={everyMiles} onChange={(e) => setEveryMiles(e.target.value)} placeholder="5000" />
-        </Field>
-        {/* Own row, not paired with Odometer then — a date input's intrinsic
-            width on iOS Safari can exceed a formgrid column's, overlapping
-            the field next to it. */}
+        {/* Mileage-based cadence only makes sense for a car — a home/tech/
+            other item has no odometer, so these two fields are car-only. */}
+        {scope === 'car' && (
+          <Field label="Every (miles)">
+            <input type="text" inputMode="numeric" value={everyMiles} onChange={(e) => setEveryMiles(e.target.value)} placeholder="5000" />
+          </Field>
+        )}
+        {/* Own row, not paired with the field next to it — a date input's
+            intrinsic width on iOS Safari can exceed a formgrid column's,
+            overlapping whatever's beside it. */}
         <Field label="Last done" wide>
           <input type="date" value={lastDone} onChange={(e) => setLastDone(e.target.value)} />
         </Field>
-        <Field label="Odometer then">
-          <input type="text" inputMode="numeric" value={lastOdometer} onChange={(e) => setLastOdometer(e.target.value)} />
-        </Field>
+        {scope === 'car' && (
+          <Field label="Mileage at last service">
+            <input type="text" inputMode="numeric" value={lastOdometer} onChange={(e) => setLastOdometer(e.target.value)} />
+          </Field>
+        )}
         <Field label="Cost">
           <input type="text" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="60" />
         </Field>

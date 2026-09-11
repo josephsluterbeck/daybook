@@ -9,7 +9,7 @@ import { expenseTotal } from './budget'
 import { prettyDate } from './dates'
 
 export interface Hit {
-  kind: 'task' | 'note' | 'movie' | 'game' | 'expense' | 'series' | 'project' | 'shopping' | 'person' | 'maintenance' | 'topic' | 'inbox'
+  kind: 'task' | 'note' | 'movie' | 'game' | 'expense' | 'series' | 'project' | 'shopping' | 'person' | 'maintenance' | 'topic'
   id: ID
   title: string
   sub: string
@@ -95,12 +95,6 @@ export function search(data: AppData, q: string, limit = 20): Hit[] {
   for (const t of data.topics) {
     const score = scoreOf(query, t.label, t.resources.map((r) => r.title).join(' '))
     if (score > 0) hits.push({ kind: 'topic', id: t.id, title: t.label, sub: t.status, score })
-  }
-
-  for (const item of data.inbox) {
-    const title = item.text.length > 60 ? `${item.text.slice(0, 60)}…` : item.text
-    const score = scoreOf(query, item.text, '')
-    if (score > 0) hits.push({ kind: 'inbox', id: item.id, title, sub: prettyDate(item.at.slice(0, 10)), score })
   }
 
   return hits.sort((a, b) => b.score - a.score).slice(0, limit)

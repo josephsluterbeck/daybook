@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { store, uid, useData, useHighlight } from '../../core/store'
 import type { Game, GameStatus, Movie, Series } from '../../core/types'
 import { formatMoney } from '../../core/budget'
-import { backlogHours, costPerHour, gameHours, weeksToClearBacklog } from '../../core/games'
+import { backlogHours, costPerHour, gameHours } from '../../core/games'
 import { snoozeTriage, triageCandidates, triageDue } from '../../core/triage'
 import { prettyDate, todayKey } from '../../core/dates'
 import { Empty, Field, Icons, Panel, Segmented, Sheet, useCountUp, useHighlightRow } from '../components/kit'
@@ -121,6 +121,8 @@ function TriageCard() {
 /* ══ Movies ══════════════════════════════════════════════════════════════ */
 
 const PRIORITY_LABEL: Record<number, string> = { 3: 'Next up', 2: 'Soon', 1: 'Someday' }
+/** A colour cue per priority, not just "Next up" standing out — Soon and Someday now read at a glance too. */
+const PRIORITY_TONE: Record<number, string> = { 3: 'accent', 2: 'warn', 1: 'good' }
 
 function Movies() {
   const data = useData()
@@ -288,7 +290,7 @@ function MovieRow({ movie: m, onToggle, onEdit }: { movie: Movie; onToggle: () =
           {m.notes && ` · ${m.notes}`}
         </div>
       </div>
-      <span className={`chip${m.priority === 3 ? ' accent' : ''}`}>{PRIORITY_LABEL[m.priority]}</span>
+      <span className={`chip ${PRIORITY_TONE[m.priority]}`}>{PRIORITY_LABEL[m.priority]}</span>
       <button className="iconbtn" aria-label={`Edit ${m.title}`} onClick={onEdit}>
         <Icons.edit />
       </button>
@@ -585,16 +587,6 @@ function Games() {
   const activeGames = useMemo(() => data.games.filter((g) => !g.archived), [data.games])
   const backlog = backlogHours(activeGames)
   const backlogDisplay = useCountUp(backlog)
-  const [hoursPerWeek, setHoursPerWeek] = useState(String(data.settings.hoursPerWeek ?? ''))
-  const weeks = data.settings.hoursPerWeek ? weeksToClearBacklog(activeGames, data.settings.hoursPerWeek) : null
-
-  const saveHoursPerWeek = (v: string) => {
-    setHoursPerWeek(v)
-    const n = Number(v)
-    store.update((d) => {
-      d.settings.hoursPerWeek = Number.isFinite(n) && n > 0 ? n : undefined
-    })
-  }
 
   const quickAdd = () => {
     const t = title.trim()
@@ -611,28 +603,7 @@ function Games() {
         <section className="panel">
           <div className="hero">
             <div className="figure">{Math.round(backlogDisplay)}h</div>
-            <p className="caption">
-              queued up across your backlog and wishlist.
-              {weeks != null && (
-                <>
-                  {' '}
-                  At <strong>{data.settings.hoursPerWeek}</strong>h/week, that's about <strong>{weeks}</strong>{' '}
-                  week{weeks === 1 ? '' : 's'} — a good argument against buying the next one.
-                </>
-              )}
-            </p>
-          </div>
-          <div style={{ padding: '0 14px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="meta">Realistic hours/week</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={hoursPerWeek}
-              onChange={(e) => saveHoursPerWeek(e.target.value)}
-              placeholder="6"
-              aria-label="Realistic hours per week"
-              style={{ maxWidth: 70 }}
-            />
+            <p className="caption">queued up across your backlog and wishlist.</p>
           </div>
         </section>
       )}
@@ -737,6 +708,15 @@ function GameRow({
       </div>
       {g.price ? <span className="num meta">{formatMoney(g.price, currency)}</span> : null}
       {tone && <span className={`chip ${tone}`}>{label}</span>}
+      {/* Platinum indicator — colour alone carries the state here since the
+          icon's shape never changes, but it's decorative, not the only way
+          to tell (the sheet's own checkbox is the actual control). */}
+      <span
+        title={g.platinum ? 'Platinum trophy earned' : 'Platinum trophy not yet earned'}
+        style={{ display: 'inline-flex', color: g.platinum ? 'var(--accent-ink)' : 'var(--ink-3)', opacity: g.platinum ? 1 : 0.4 }}
+      >
+        <Icons.trophy size={16} />
+      </span>
       <button className="iconbtn" aria-label={`Edit ${g.title}`} onClick={onEdit}>
         <Icons.edit />
       </button>
@@ -749,12 +729,17 @@ function GameSheet({ game, onClose }: { game: Game | null; onClose: () => void }
   // Re-read the live game so the session ledger below updates as entries are
   // added/removed, instead of freezing at whatever `game` was on open.
   const live = game ? (data.games.find((x) => x.id === game.id) ?? game) : null
+  const [showAllSessions, setShowAllSessions] = useState(false)
+  const sortedSessions = useMemo(() => [...(live?.sessions ?? [])].sort((a, b) => b.date.localeCompare(a.date)), [live])
+  const collapsibleSessions = sortedSessions.length > 2
+  const visibleSessions = showAllSessions || !collapsibleSessions ? sortedSessions : sortedSessions.slice(0, 2)
 
   const [title, setTitle] = useState(game?.title ?? '')
   const [platform, setPlatform] = useState(game?.platform ?? '')
   const [price, setPrice] = useState(String(game?.price ?? ''))
   const [status, setStatus] = useState<GameStatus>(game?.status ?? 'wishlist')
   const [notes, setNotes] = useState(game?.notes ?? '')
+  const [platinum, setPlatinum] = useState(game?.platinum ?? false)
 
   const [sessionHours, setSessionHours] = useState('')
   const [sessionDate, setSessionDate] = useState(todayKey())
@@ -767,6 +752,7 @@ function GameSheet({ game, onClose }: { game: Game | null; onClose: () => void }
       price: Number(price) || undefined,
       status,
       notes: notes.trim() || undefined,
+      platinum,
     }
     store.update((d) => {
       if (game) {
@@ -830,25 +816,32 @@ function GameSheet({ game, onClose }: { game: Game | null; onClose: () => void }
           <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="wait for a sale" />
         </Field>
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 14 }}>
+        <input type="checkbox" className="check" checked={platinum} onChange={(e) => setPlatinum(e.target.checked)} />
+        <Icons.trophy size={16} /> Platinum trophy earned
+      </label>
 
       {game && (
         <Field label={`Play sessions · ${gameHours(live!)} hours total`}>
           <div className="rows" style={{ border: '1px solid var(--line)', borderRadius: 8 }}>
-            {live!.sessions?.length ? null : <Empty>No sessions logged yet.</Empty>}
-            {[...(live!.sessions ?? [])]
-              .sort((a, b) => b.date.localeCompare(a.date))
-              .map((s) => (
-                <div key={s.id} className="row">
-                  <div className="grow">
-                    <div className="title">{s.hours}h</div>
-                    <div className="meta">{prettyDate(s.date)}</div>
-                  </div>
-                  <button type="button" className="iconbtn" aria-label="Remove session" onClick={() => removeSession(s.id)}>
-                    <Icons.x size={15} />
-                  </button>
+            {visibleSessions.length ? null : <Empty>No sessions logged yet.</Empty>}
+            {visibleSessions.map((s) => (
+              <div key={s.id} className="row">
+                <div className="grow">
+                  <div className="title">{s.hours}h</div>
+                  <div className="meta">{prettyDate(s.date)}</div>
                 </div>
-              ))}
+                <button type="button" className="iconbtn" aria-label="Remove session" onClick={() => removeSession(s.id)}>
+                  <Icons.x size={15} />
+                </button>
+              </div>
+            ))}
           </div>
+          {collapsibleSessions && (
+            <button type="button" className="btn sm ghost" style={{ marginTop: 8 }} onClick={() => setShowAllSessions((s) => !s)}>
+              {showAllSessions ? 'Show fewer sessions' : `Show all ${sortedSessions.length} sessions`}
+            </button>
+          )}
           <div style={{ display: 'flex', gap: 8, paddingTop: 10 }}>
             <input
               type="date"

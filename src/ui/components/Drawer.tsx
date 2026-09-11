@@ -10,9 +10,7 @@ const DRAWER_ICON: Record<DrawerKey, (p?: { size?: number }) => ReturnType<typeo
   people: Icons.people,
   maintenance: Icons.maintenance,
   learning: Icons.learning,
-  inbox: Icons.inbox,
   scenarios: Icons.scenario,
-  monthclose: Icons.monthClose,
   settings: Icons.settings,
 }
 

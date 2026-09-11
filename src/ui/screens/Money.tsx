@@ -12,7 +12,6 @@ import {
   envelopeHistory,
   expenseTotal,
   formatMoney,
-  frequentExpenses,
   goalProgress,
   goalSaved,
   investMonthlyProgress,
@@ -989,8 +988,6 @@ function SpendingTab({ money, mk }: { money: Fmt; mk: string }) {
   const items = useMemo(() => data.expenses.filter((e) => e.date.startsWith(mk)).reverse(), [data.expenses, mk])
   const total = items.reduce((s, e) => s + expenseTotal(e), 0)
   const groups = useMemo(() => groupByEnvelope(items, data.envelopes), [items, data.envelopes])
-  const presets = useMemo(() => frequentExpenses(data.expenses), [data.expenses])
-  const envName = (id?: string) => data.envelopes.find((e) => e.id === id)?.label ?? 'Unassigned'
 
   const logExpense = (amt: number, envelopeId?: string) => {
     if (!Number.isFinite(amt) || amt <= 0) return
@@ -1021,21 +1018,6 @@ function SpendingTab({ money, mk }: { money: Fmt; mk: string }) {
             </button>
           }
         >
-          {presets.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 14px 0' }}>
-              {presets.map((p) => (
-                <button
-                  key={`${p.envelopeId ?? ''}-${p.amount}`}
-                  type="button"
-                  className="chip accent"
-                  style={{ cursor: 'pointer', border: 0 }}
-                  onClick={() => logExpense(p.amount, p.envelopeId)}
-                >
-                  {money(p.amount)} · {envName(p.envelopeId)}
-                </button>
-              ))}
-            </div>
-          )}
           <div className="quickadd">
             <input
               type="text"
@@ -1064,7 +1046,7 @@ function SpendingTab({ money, mk }: { money: Fmt; mk: string }) {
           <button
             type="button"
             className="btn sm ghost"
-            style={{ margin: '0 14px 14px' }}
+            style={{ margin: '4px 14px 8px' }}
             onClick={() => setEditing('new')}
           >
             Split across envelopes or log a refund
@@ -1075,25 +1057,58 @@ function SpendingTab({ money, mk }: { money: Fmt; mk: string }) {
       <Panel title={`${monthLabel(mk)} · ${money(total)}`}>
         {items.length === 0 && <Empty>Nothing logged in {monthLabel(mk)}.</Empty>}
         {groups.map((g) => (
-          <div key={g.key}>
-            <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', padding: '10px 14px 4px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <EnvelopeIcon icon={g.icon} color={g.color} />
-                {g.label}
-              </span>
-              <span className="num">{money(g.total)}</span>
-            </div>
-            <div className="rows">
-              {g.items.map((it) => (
-                <ExpenseRow key={it.key} item={it} color={g.color} money={money} onEdit={() => setEditing(it.expense)} />
-              ))}
-            </div>
-          </div>
+          <EnvelopeGroupSection key={g.key} group={g} money={money} onEdit={setEditing} />
         ))}
       </Panel>
 
       {editing && <ExpenseSheet expense={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </>
+  )
+}
+
+/** Two most-recent entries always show — collapsed just hides the rest, it never hides the whole envelope. */
+const COLLAPSED_COUNT = 2
+
+/** One envelope's group of expense lines within the Spending list — collapsible once it has more than a couple of entries, since a heavily-used envelope's history can otherwise push everything else off screen. */
+function EnvelopeGroupSection({ group: g, money, onEdit }: { group: EnvelopeGroup; money: Fmt; onEdit: (e: Expense | 'new') => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const collapsible = g.items.length > COLLAPSED_COUNT
+  const visible = expanded || !collapsible ? g.items : g.items.slice(0, COLLAPSED_COUNT)
+  const hidden = g.items.length - visible.length
+
+  return (
+    <div>
+      <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between', padding: '10px 14px 4px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <EnvelopeIcon icon={g.icon} color={g.color} />
+          {g.label}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="num">{money(g.total)}</span>
+          {collapsible && (
+            <button
+              type="button"
+              className="iconbtn"
+              aria-label={expanded ? `Collapse ${g.label}` : `Expand ${g.label}`}
+              onClick={() => setExpanded((e) => !e)}
+              style={{ transform: expanded ? 'rotate(90deg)' : undefined }}
+            >
+              <Icons.chevron size={14} />
+            </button>
+          )}
+        </span>
+      </div>
+      <div className="rows">
+        {visible.map((it) => (
+          <ExpenseRow key={it.key} item={it} color={g.color} money={money} onEdit={() => onEdit(it.expense)} />
+        ))}
+      </div>
+      {collapsible && hidden > 0 && (
+        <button type="button" className="btn sm ghost" style={{ margin: '0 14px 10px' }} onClick={() => setExpanded(true)}>
+          Show {hidden} more
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -1169,7 +1184,7 @@ function BatchEntry({ money, onExit }: { money: Fmt; onExit: () => void }) {
         </button>
       }
     >
-      <div className="formgrid" style={{ padding: '0 14px' }}>
+      <div className="formgrid batch-formgrid" style={{ padding: '14px 14px 0' }}>
         <Field label="Amount">
           <input
             ref={amountRef}
@@ -1196,21 +1211,24 @@ function BatchEntry({ money, onExit }: { money: Fmt; onExit: () => void }) {
         <Field label="Note">
           <input type="text" value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={onEnter} placeholder="Optional" aria-label="Note" />
         </Field>
-        <Field label="Date">
+        {/* Own row, not squeezed to half-width next to Note — a native date
+            input's intrinsic width on a real phone can exceed a formgrid
+            column's, clipping it (same fix used everywhere else in the app). */}
+        <Field label="Date" wide>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Date" />
         </Field>
       </div>
-      <div style={{ padding: '10px 14px 0' }}>
+      <div style={{ padding: '14px 14px 0' }}>
         <button type="button" className="btn primary" onClick={add} disabled={!amount}>
           Add
         </button>
       </div>
 
-      <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 14px 4px' }}>
+      <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 14px 8px' }}>
         <span>This session · {sessionAdds.length}</span>
         <span className="num">{money(total)}</span>
       </div>
-      <div className="rows">
+      <div className="rows batch-rows">
         {sessionAdds.length === 0 && <Empty>Nothing added yet — the amount field keeps focus after each one.</Empty>}
         {sessionAdds.map((a) => (
           <div key={a.id} className="row">
@@ -1411,7 +1429,7 @@ function GoalsTab({ money }: { money: Fmt }) {
               <div className="grow" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                   <span className="title">{g.label}</span>
-                  <span className={`chip ${g.kind === 'invest' ? 'accent' : ''}`}>{g.kind}</span>
+                  <span className={`chip ${g.kind === 'invest' ? 'accent' : 'good'}`}>{g.kind}</span>
                   {g.kind === 'save' ? <SaveBadge g={g} /> : <InvestBadge g={g} />}
                 </div>
                 {g.kind === 'save' ? <SaveProgress g={g} money={money} /> : <InvestProgress g={g} money={money} />}

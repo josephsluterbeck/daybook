@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { store, uid, useData } from '../../core/store'
-import { buildPlan, dueGoalContributions, formatMoney, fundingGap, goalProgress, goalSaved, lastPayDate, loggingStreak, nextPaydayFor, upcomingBills } from '../../core/budget'
+import { buildPlan, dueGoalContributions, formatMoney, goalProgress, goalSaved, upcomingBills } from '../../core/budget'
 import { gameHours } from '../../core/games'
 import { daysSinceTouched, staleProjects } from '../../core/projects'
 import { overdueContact, upcomingBirthdays } from '../../core/people'
@@ -8,20 +8,18 @@ import { dueMaintenance } from '../../core/maintenance'
 import { tasksFor } from '../../core/tasks'
 import { todaysTakeaway } from '../../core/learning'
 import { allInsights, dismissInsight, TODAY_INSIGHT_CAP, type Insight } from '../../core/insights'
-import { nextCloseMonth } from '../../core/monthclose'
-import MonthCloseSheet from '../MonthCloseSheet'
-import { addDays, daysAway, fromKey, monthLabel, relativeDay, todayKey } from '../../core/dates'
-import { parseQuickAdd } from '../../core/parse'
+import { addDays, daysAway, relativeDay, todayKey } from '../../core/dates'
+import { applyIntent, describeIntent } from '../../core/intents'
+import { intentFromParsed, parseQuickAdd } from '../../core/parse'
 import { search, type Hit } from '../../core/search'
 import { Empty, Icons, Panel, useCountUp } from '../components/kit'
-import PaycheckSheet, { FALLBACK_PAY_WINDOW } from '../PaycheckSheet'
 import RoutinesPanel from '../RoutinesPanel'
 import WeeklyReview from '../WeeklyReview'
 import YearReview from '../YearReview'
 import { effectiveTodayOrder, type RouteKey, type TodayPanelKey } from '../nav'
 
-const KIND_LABEL: Record<Hit['kind'], string> = { task: 'Tasks', note: 'Journal', movie: 'Movies', series: 'Series', game: 'Games', expense: 'Expenses', project: 'Projects', shopping: 'Shopping', person: 'People', maintenance: 'Maintenance', topic: 'Learning', inbox: 'Inbox' }
-const KIND_ORDER: Hit['kind'][] = ['task', 'note', 'inbox', 'project', 'shopping', 'person', 'maintenance', 'topic', 'movie', 'series', 'game', 'expense']
+const KIND_LABEL: Record<Hit['kind'], string> = { task: 'Tasks', note: 'Journal', movie: 'Movies', series: 'Series', game: 'Games', expense: 'Expenses', project: 'Projects', shopping: 'Shopping', person: 'People', maintenance: 'Maintenance', topic: 'Learning' }
+const KIND_ORDER: Hit['kind'][] = ['task', 'note', 'project', 'shopping', 'person', 'maintenance', 'topic', 'movie', 'series', 'game', 'expense']
 
 /** 'HH:MM' 24h -> '2:00 PM'. Local to this screen — the only place a task time needs to read as a sentence instead of a form field. */
 function formatTime12(t: string): string {
@@ -101,15 +99,9 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
   const [quickAdd, setQuickAdd] = useState('')
   const [reviewing, setReviewing] = useState(false)
   const [reviewingYear, setReviewingYear] = useState(false)
-  const [assigningPaycheck, setAssigningPaycheck] = useState(false)
-  const [closingMonth, setClosingMonth] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const money = (n: number) => formatMoney(n, data.settings.currency)
   const plan = useMemo(() => buildPlan(data), [data])
-  const streak = useMemo(() => loggingStreak(data.expenses), [data.expenses])
-  // Offered from the 1st until it's done, then gone (#40) — "done" just
-  // means nextCloseMonth() no longer finds a past month without a record.
-  const pendingClose = useMemo(() => nextCloseMonth(data), [data])
 
   // The most recent note from exactly this month/day in a prior year — the
   // only thing that makes an old journal worth having written.
@@ -143,7 +135,6 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
     else if (hit.kind === 'person') go('people')
     else if (hit.kind === 'maintenance') go('maintenance')
     else if (hit.kind === 'topic') go('learning')
-    else if (hit.kind === 'inbox') go('inbox')
     else if (hit.kind === 'movie' || hit.kind === 'game' || hit.kind === 'series') go('queue')
     else go('money')
   }
@@ -199,24 +190,6 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
     [data.maintenance, data.settings.odometer],
   )
 
-  // A paycheck that's landed but has nothing assigned yet — and still has
-  // something left unfunded before the next one, so a fully-covered month
-  // doesn't nag forever with nothing useful to do about it.
-  const paycheckPrompt = useMemo(() => {
-    for (const income of data.incomes) {
-      const last = lastPayDate(income)
-      if (!last) continue
-      if (data.allocations.some((a) => a.paycheckDate === last)) continue
-      const afterCandidates = data.incomes
-        .map((i) => nextPaydayFor(i, fromKey(addDays(last, 1))))
-        .filter((d): d is string => d != null)
-      const until = afterCandidates.length > 0 ? afterCandidates.sort()[0] : addDays(last, FALLBACK_PAY_WINDOW[income.cadence])
-      if (fundingGap(data, until).length === 0) continue
-      return { income, paycheckDate: last, until }
-    }
-    return null
-  }, [data])
-
   // A standing deposit (a spouse's paycheck autopay, say) that's landed but
   // hasn't been logged as a Contribution yet — see budget.dueGoalContributions.
   const dueContributions = useMemo(() => dueGoalContributions(data), [data])
@@ -240,16 +213,16 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
   // work, not a debounce-worthy cost.
   const quickAddParsed = useMemo(() => (quickAdd.trim() ? parseQuickAdd(quickAdd, data.envelopes) : null), [quickAdd, data.envelopes])
 
-  // #29: capture asks nothing — the parse is shown for reassurance, but
-  // committing it is Inbox's job now, done in a batch during triage. Nothing
-  // here decides an envelope or files a task; it just lands the raw text
-  // (plus the guess, so triage doesn't start from scratch).
+  // Commits instantly as an expense/task/note, same write path as a
+  // Shortcut deep link — the preview chip above is the only safeguard
+  // against a silent misfile, so it's shown before this ever runs.
   const submitQuickAdd = () => {
     const raw = quickAdd.trim()
     if (!raw) return
-    store.update((d) => {
-      d.inbox.push({ id: uid(), at: new Date().toISOString(), text: raw, guess: quickAddParsed ?? undefined })
-    })
+    const parsed = quickAddParsed ?? parseQuickAdd(raw, data.envelopes)
+    const intent = intentFromParsed(parsed)
+    store.update((d) => applyIntent(d, intent))
+    store.notice(describeIntent(intent))
     setQuickAdd('')
   }
 
@@ -508,11 +481,11 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
               style={{ flex: 1, minWidth: 0 }}
             />
             <button className="btn primary" type="button" onClick={submitQuickAdd} disabled={!quickAdd.trim()}>
-              Capture
+              Add
             </button>
           </div>
-          {/* Capture asks nothing — this preview is reassurance, not a gate.
-              The actual filing decision happens in Inbox, in a batch. */}
+          {/* Shown before committing — the parser's own non-negotiable that a
+              silent misfile never happens without at least this to catch it. */}
           {quickAddParsed && (
             <span className="chip accent" style={{ alignSelf: 'flex-start' }}>
               {quickAddParsed.kind === 'expense' &&
@@ -521,18 +494,6 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
                 `Task${quickAddParsed.due ? ` · due ${relativeDay(quickAddParsed.due)}` : ''}${quickAddParsed.time ? ` · ${formatTime12(quickAddParsed.time)}` : ''}`}
               {quickAddParsed.kind === 'note' && 'Journal note'}
             </span>
-          )}
-          {data.inbox.length > 0 && (
-            <button
-              className="btn sm ghost"
-              type="button"
-              onClick={() => go('inbox')}
-              style={{ alignSelf: 'flex-start', color: data.inbox.length > 20 ? 'var(--warn)' : undefined, borderColor: data.inbox.length > 20 ? 'var(--warn)' : undefined }}
-            >
-              {data.inbox.length > 20
-                ? `${data.inbox.length} waiting in Inbox — worth a pass`
-                : `${data.inbox.length} waiting in Inbox`}
-            </button>
           )}
         </div>
       </Panel>
@@ -598,17 +559,6 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
         </div>
       )}
 
-      {paycheckPrompt && (
-        <div className="notice" style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)', borderColor: 'var(--accent)' }}>
-          <span>
-            {money(paycheckPrompt.income.amount)} from {paycheckPrompt.income.label} landed {relativeDay(paycheckPrompt.paycheckDate)}. Nothing's assigned yet.
-          </span>
-          <span className="spacer" style={{ display: 'flex', gap: 8 }}>
-            <button className="btn sm" onClick={() => setAssigningPaycheck(true)}>Assign it</button>
-          </span>
-        </div>
-      )}
-
       {dueContributions.map(({ goal, recurring, date }) => (
         <div key={recurring.id} className="notice" style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)', borderColor: 'var(--accent)' }}>
           <span>
@@ -620,16 +570,7 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
         </div>
       ))}
 
-      {pendingClose && (
-        <div className="notice" style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)', borderColor: 'var(--accent)' }}>
-          <span>{monthLabel(pendingClose)} hasn't been closed out yet.</span>
-          <span className="spacer" style={{ display: 'flex', gap: 8 }}>
-            <button className="btn sm" onClick={() => setClosingMonth(true)}>Close it out</button>
-          </span>
-        </div>
-      )}
-
-      <section className="panel">
+      <section className="panel compact-hero">
         <div className="hero">
           <div className="figure" style={{ color: `var(--${perDayTone})` }}>{money(perDayDisplay)}</div>
           <p className="caption">
@@ -651,12 +592,6 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
             <div className="k">Days left</div>
             <div className="v">{plan.daysLeft}</div>
           </div>
-          {streak > 0 && (
-            <div className="stat">
-              <div className="k">Logging streak</div>
-              <div className="v">{streak} {streak === 1 ? 'day' : 'days'}</div>
-            </div>
-          )}
         </div>
       </section>
 
@@ -708,15 +643,6 @@ export default function Today({ go }: { go: (t: RouteKey) => void }) {
 
       {reviewing && <WeeklyReview onClose={() => setReviewing(false)} />}
       {reviewingYear && <YearReview onClose={() => setReviewingYear(false)} />}
-      {assigningPaycheck && paycheckPrompt && (
-        <PaycheckSheet
-          income={paycheckPrompt.income}
-          paycheckDate={paycheckPrompt.paycheckDate}
-          until={paycheckPrompt.until}
-          onClose={() => setAssigningPaycheck(false)}
-        />
-      )}
-      {closingMonth && pendingClose && <MonthCloseSheet month={pendingClose} onClose={() => setClosingMonth(false)} />}
     </>
   )
 }

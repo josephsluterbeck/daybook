@@ -23,7 +23,6 @@ export const emptyData = (): AppData => ({
   people: [],
   maintenance: [],
   topics: [],
-  inbox: [],
   closes: [],
   scenarios: [],
 })
@@ -322,28 +321,6 @@ export const seedData = (): AppData => ({
       text: 'A stiffer starter (less water) ferments slower and gives a more sour flavor — hydration is a real dial, not just texture.',
       tags: [],
       topicId: id('tp', 2),
-    },
-  ],
-  // Capture now, decide later — each of these went in as raw text with no
-  // decision required, the way #17's parser guessed it at the time.
-  inbox: [
-    {
-      id: id('ib', 1),
-      at: new Date(Date.now() - 3 * 3_600_000).toISOString(),
-      text: 'coffee 4.50',
-      guess: { kind: 'expense', amount: 4.5, envelopeHint: 'Eating out', note: 'coffee' },
-    },
-    {
-      id: id('ib', 2),
-      at: new Date(Date.now() - 5 * 3_600_000).toISOString(),
-      text: 'call the dentist friday',
-      guess: { kind: 'task', title: 'call the dentist', due: addDays(todayKey(), 3) },
-    },
-    {
-      id: id('ib', 3),
-      at: new Date(Date.now() - 26 * 3_600_000).toISOString(),
-      text: 'idea for the long weekend: cabin trip',
-      guess: { kind: 'note', text: 'idea for the long weekend: cabin trip' },
     },
   ],
   closes: [],

@@ -219,6 +219,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pet-strip {
   position: relative;
   height: 24px;
+  margin-top: 8px;
   flex: 0 0 auto;
   overflow: hidden;
 }
@@ -534,6 +535,13 @@ main > * { animation: fade-in 0.18s ease; }
 
 .hero .caption { font-size: 13px; color: var(--ink-2); max-width: 30ch; }
 .hero .caption strong { color: var(--ink); font-weight: 600; }
+
+/* Home's own "X a day" box, below the search field — smaller than the same
+   hero markup used on Money's Plan/Bills/Goals tabs, which still get the
+   full-size treatment. Scoped to this one panel, not a global .hero change. */
+.compact-hero .hero { padding: 12px 18px; gap: 10px; }
+.compact-hero .hero .figure { font-size: clamp(26px, 8vw, 34px); }
+.compact-hero .stat { padding: 8px 14px; }
 
 /* ── Stat strip ────────────────────────────────────────────── */
 
@@ -1022,6 +1030,12 @@ input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font
 .formgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 11px; }
 .formgrid .wide { grid-column: 1 / -1; }
 
+/* Batch entry (Spending) gets more breathing room than a normal Sheet's
+   formgrid — it's a screen you sit in for a while, not a quick modal. */
+.batch-formgrid { gap: 16px 11px; padding-bottom: 4px; }
+.batch-rows { gap: 8px; }
+.batch-rows .row { border-radius: 8px; }
+
 /* Quick-add bar */
 .quickadd { display: flex; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
 .quickadd:last-child { border-bottom: 0; }
@@ -1040,13 +1054,13 @@ input[inputmode='decimal'], input[inputmode='numeric'] { font-family: var(--font
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 11px;
+  padding: 6px 11px;
   margin-bottom: 10px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
   background: var(--surface);
   color: var(--ink-3);
-  min-height: var(--tap);
+  min-height: 36px;
 }
 .searchbox input { flex: 1; min-width: 0; border: 0; padding: 0; background: none; color: var(--ink); }
 .searchbox input:focus { outline: none; }

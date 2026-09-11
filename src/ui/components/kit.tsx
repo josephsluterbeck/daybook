@@ -49,12 +49,11 @@ export const Icons = {
   people: ico(<><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M16 5.5a3.2 3.2 0 0 1 0 6.2M20.5 20a5 5 0 0 0-4.5-5.8" /></>),
   maintenance: ico(<path d="M14.5 3.5a4 4 0 0 0-5 5L4 14l2 2 5.5-5.5a4 4 0 0 0 5-5l-2.8 2.8-2-2z" />),
   learning: ico(<><path d="M12 5L2.5 9.5 12 14l9.5-4.5z" /><path d="M6 12v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5" /></>),
-  inbox: ico(<><path d="M3.5 12h4.5l1.5 3h5l1.5-3h4.5" /><path d="M6 5.5h12l1.5 6.5v6a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18v-6z" /></>),
   check: ico(<path d="M4.5 12.5l4.5 4.5 10.5-11" />),
   refresh: ico(<><path d="M4 12a8 8 0 0 1 14-5.2M20 12a8 8 0 0 1-14 5.2" /><path d="M18 3v4h-4M6 21v-4h4" /></>),
   eyeOff: ico(<><path d="M3.5 3.5l17 17" /><path d="M10.6 5.2A10.4 10.4 0 0 1 12 5c5 0 9 3.5 10 7-0.4 1.3-1.1 2.5-2 3.6M6.5 6.7C4.4 8 2.9 9.9 2 12c1 3.5 5 7 10 7 1.4 0 2.7-0.3 3.9-0.7" /><path d="M9.7 10a3.2 3.2 0 0 0 4.4 4.4" /></>),
-  monthClose: ico(<><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 9.5h17" /><path d="M8 5V3M16 5V3" /><path d="M8.5 14l2.2 2.2L15.5 12" /></>),
   scenario: ico(<><path d="M4 20V10M4 10l4-4 4 3 5-6" /><path d="M17 3h4v4" /><path d="M4 20h16" /></>),
+  trophy: ico(<><path d="M7 4h10v4a5 5 0 0 1-10 0z" /><path d="M7 5H4v1.5A3.5 3.5 0 0 0 7.5 10M17 5h3v1.5A3.5 3.5 0 0 1 16.5 10" /><path d="M12 13v3.5M9 20.5h6M9.5 20.5c0-2 1-2.6 1-3.5M14.5 20.5c0-2-1-2.6-1-3.5" /></>),
 }
 
 /* ── Sheet: the one modal used for every add/edit form ──────────────────── */

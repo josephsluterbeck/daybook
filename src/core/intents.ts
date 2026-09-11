@@ -42,11 +42,11 @@ export function parseIntent(search: string): Intent | null {
 }
 
 /**
- * `?capture=` is the inbox's own deep link (#29) — unlike the structured
- * `?add=` shapes above, this one is deliberately unstructured: a Shortcut
- * (or Siri dictation) hands over raw text with no decision made yet, exactly
- * like typing into Today's own capture field. Kept separate from `Intent`
- * since nothing has been decided for it to represent.
+ * `?capture=` is the free-text deep link — unlike the structured `?add=`
+ * shapes above, a Shortcut (or Siri dictation) can hand over raw, un-typed
+ * text here, exactly like typing into Today's own quick-add field. App.tsx
+ * runs it through the same parser and commits it the same way. Kept separate
+ * from `Intent` since nothing has been decided for it to represent yet.
  */
 export function parseCaptureParam(search: string): string | null {
   return new URLSearchParams(search).get('capture')

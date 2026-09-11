@@ -46,6 +46,8 @@ export interface Game {
   archived?: boolean
   /** 'YYYY-MM-DD' — stamped by #43's triage ("Keep"), or left unset for anything never reviewed. Falls back to addedAt for ranking. */
   lastReviewed?: string
+  /** Whether the platinum/100% trophy has been earned — just a flag, no separate trophy list. */
+  platinum?: boolean
 }
 
 export interface Income {
@@ -354,29 +356,15 @@ export interface Topic {
   lastStudied?: string // 'YYYY-MM-DD'
 }
 
-/** What core/parse.ts decided a piece of quick-add or inbox text meant — the type lives here (not in parse.ts) so InboxItem can reference it without a circular import. */
+/** What core/parse.ts decided a piece of quick-add text meant — the type lives here (not in parse.ts) so it can be shared with core/intents.ts's `Intent` without a circular import. */
 export type Parsed =
   | { kind: 'expense'; amount: number; envelopeHint?: string; note: string }
   | { kind: 'task'; title: string; due?: string; time?: string }
   | { kind: 'note'; text: string }
 
-/**
- * The structural fix for the problem that kills this kind of app: every
- * capture used to require a decision *before* you could record it. An inbox
- * item asks nothing at capture time — `guess` is computed once, up front,
- * and shown as a suggestion during a later, batched triage, not acted on
- * immediately.
- */
-export interface InboxItem {
-  id: ID
-  at: string // ISO
-  text: string
-  guess?: Parsed
-}
-
 export type Theme = 'system' | 'light' | 'dark'
 
-/** The six accent hues in core/theme.ts — kept here, not there, so Settings can reference it without types.ts importing from anywhere else in core/ (same rule that moved `Parsed` here for InboxItem). */
+/** The six accent hues in core/theme.ts — kept here, not there, so Settings can reference it without types.ts importing from anywhere else in core/ (same rule that moved `Parsed` here). */
 export type PaletteId = 'cobalt' | 'ember' | 'indigo' | 'moss' | 'slate' | 'plum'
 
 // Route keys stay exactly as they were before the four-tab-plus-drawer
@@ -385,7 +373,7 @@ export type PaletteId = 'cobalt' | 'ember' | 'indigo' | 'moss' | 'slate' | 'plum
 /** Kept here, not in ui/nav.ts, so core/insights.ts (#34-38's `Insight.action.route`) can reference it without core/ reaching into ui/ — ui/nav.ts imports and re-exports both for its own use. */
 export type TabKey = 'today' | 'money' | 'tasks' | 'queue'
 /** Every Part-four section has a real screen behind it — 'settings' is the only DrawerKey (see ui/nav.ts) that never becomes a route, since it opens a Sheet instead. */
-export type RouteKey = TabKey | 'journal' | 'inbox' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios'
+export type RouteKey = TabKey | 'journal' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios'
 
 export interface Settings {
   name: string
@@ -444,7 +432,6 @@ export interface AppData {
   people: Person[]
   maintenance: MaintenanceItem[]
   topics: Topic[]
-  inbox: InboxItem[]
   closes: MonthClose[]
   scenarios: Scenario[]
 }

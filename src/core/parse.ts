@@ -7,8 +7,7 @@
  */
 import type { Intent } from './intents'
 import type { Envelope, Parsed } from './types'
-import { addDays, addMonths, relativeDay, toKey } from './dates'
-import { formatMoney } from './budget'
+import { addDays, addMonths, toKey } from './dates'
 
 export type { Parsed }
 
@@ -170,15 +169,4 @@ export function intentFromParsed(p: Parsed): Intent {
   if (p.kind === 'expense') return { kind: 'expense', amount: p.amount, envelope: p.envelopeHint, note: p.note }
   if (p.kind === 'task') return { kind: 'task', title: p.title, due: p.due, time: p.time }
   return { kind: 'note', text: p.text }
-}
-
-/** One line describing a parse — the live preview under quick-add, and the pre-filled guess shown during inbox triage (#29). */
-export function describeParsed(p: Parsed, currency = 'USD'): string {
-  if (p.kind === 'expense') return `Expense · ${formatMoney(p.amount, currency)} · ${p.envelopeHint ?? 'Unassigned'}`
-  if (p.kind === 'task') {
-    const when = p.due ? ` · due ${relativeDay(p.due)}` : ''
-    const time = p.time ? ` · ${p.time}` : ''
-    return `Task${when}${time}`
-  }
-  return 'Journal note'
 }

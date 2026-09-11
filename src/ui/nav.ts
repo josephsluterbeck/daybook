@@ -21,24 +21,20 @@ export const TABS: { key: TabKey; label: string; heading: string }[] = [
  * this rewrite. Keeping Settings a sheet (not a full screen) means its
  * Cancel/Save flow needed no changes for this refactor at all.
  */
-export type DrawerKey = 'journal' | 'inbox' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios' | 'monthclose' | 'settings'
+export type DrawerKey = 'journal' | 'projects' | 'shopping' | 'people' | 'maintenance' | 'learning' | 'scenarios' | 'settings'
 
 /**
  * `group` renders as a divider label above that run of entries; keep groups
- * short. Inbox sits ungrouped, right after Journal — it's structural
- * capture infrastructure, not a "Life" section, per #29's own framing
- * ("it isn't really a feature").
+ * short.
  */
 export const DRAWER: { key: DrawerKey; label: string; group?: string }[] = [
   { key: 'journal', label: 'Journal' },
-  { key: 'inbox', label: 'Inbox' },
   { key: 'projects', label: 'Projects', group: 'Life' },
   { key: 'shopping', label: 'Shopping', group: 'Life' },
   { key: 'people', label: 'People', group: 'Life' },
   { key: 'maintenance', label: 'Maintenance', group: 'Life' },
   { key: 'learning', label: 'Learning', group: 'Life' },
   { key: 'scenarios', label: 'Scenarios', group: 'App' },
-  { key: 'monthclose', label: 'Month close-out', group: 'App' },
   { key: 'settings', label: 'Settings', group: 'App' },
 ]
 
